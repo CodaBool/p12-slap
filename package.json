@@ -1,0 +1,36 @@
+{
+  "name": "draft",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "n": "nodemon ./server.js localhost 8080",
+    "start": "concurrently \"next dev\" \"nodemon ./server.js localhost 8080\""
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.10.0",
+    "@react-three/drei": "^9.46.0",
+    "@react-three/fiber": "^8.9.1",
+    "@react-three/rapier": "^0.11.0",
+    "axios": "^1.2.0",
+    "bootstrap": "^5.2.3",
+    "express": "^4.18.2",
+    "next": "13.0.6",
+    "react": "18.2.0",
+    "react-awesome-reveal": "^4.1.0",
+    "react-bootstrap": "^2.6.0",
+    "react-bootstrap-icons": "^1.10.2",
+    "react-dom": "18.2.0",
+    "socket.io": "^4.5.4",
+    "socket.io-client": "^4.5.4",
+    "three": "^0.147.0",
+    "three-stdlib": "^2.20.2",
+    "zustand": "^4.1.4"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "next-transpile-modules": "^10.0.0",
+    "nodemon": "^2.0.20"
+  }
+}

@@ -1,0 +1,6 @@
+/* Override Bootstrap Nav */
+.nav-link, .navbar-brand {
+  cursor: pointer;
+  font-size: 1.5rem !important;
+  margin: 0 4rem 0 4rem;
+}
