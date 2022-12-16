@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import { useLoader } from '@react-three/fiber'
-import { RigidBody, CuboidCollider } from "@react-three/rapier"
+import { useBox, useContactMaterial } from '@react-three/cannon'
 import { useMemo, useEffect, useState, useRef } from 'react'
 import { Player } from '../../constants/class'
 import { useStore } from '../../pages'
@@ -62,13 +62,22 @@ const assets = [
 ]
 
 export function dropCard(cards, key) {
+
   console.log('teleport', key)
   const card = cards.find(card => card.key === key)
-  card.ref.current.setTranslation({ x: 0, y: 5, z: 0 }, true)
-  // TODO: this seems like it's relative rotation and could casue issues
+  console.log(card)
+  card.ref.current.api.wakeUp()
+  // card.ref.current.api.mass.set(1)
+  card.ref.current.api.position.set(0,3.5,0)
   const tilt = Math.random() > .5
-  card.ref.current.setRotation({ w: 1, x: 2, y: Math.random()*.1 * tilt ? -1:1, z: 0 }, true)
+  card.ref.current.api.rotation.set(2.5,Math.random()*500 * tilt ? -.1:.1,.2)
+  // console.log(card)
+  //card.ref.current.setTranslation({ x: 0, y: 5, z: 0 }, true)
+  // TODO: this seems like it's relative rotation and could casue issues
+  //card.ref.current.setRotation({ w: 1, x: 2, y: Math.random()*.1 * tilt ? -1:1, z: 0 }, true)
 }
+
+const cardMaterial = 'card'
 
 export default function Cards() {
   const [localCards, setLocalCards] = useState(createCards())
@@ -128,28 +137,35 @@ export default function Cards() {
     }
   }, [socket, cards]) // adding 'cards' to dependency breaks player joining
 
-  
-
   function createCards() {
     const arr = []
     for (const [i, name] of assets.entries()) {
-      const ref = useRef()
+      
+      useContactMaterial(cardMaterial, cardMaterial, {
+        // contactEquationRelaxation: 3,
+        // contactEquationStiffness: 1e8,
+        friction: 100,
+        // frictionEquationStiffness: 1e8,
+        restitution: .1,
+      })
+      const [ref, api] = useBox(() => ({ position: [1 * i,1,100], mass: .01, args: [.5,.05,.7], material: cardMaterial}))
+      // api.sleep()
       const map = useLoader(THREE.TextureLoader, '/assets/cards/' + name)
       const key = name.split('_')[0].charAt(0) + name.split('_')[2].charAt(0)
-      const position = [1 * i,-3,0]
       arr.push(
-        <RigidBody position={position} key={key} ref={ref}>
-          <mesh>
-            <boxGeometry args={[.5,.01,.7]}  />
-            <meshBasicMaterial attach="material-0" color="white" />
-            <meshBasicMaterial attach="material-1" color="white" />
-            <meshStandardMaterial attach="material-2" map={map} />
-            <meshStandardMaterial attach="material-3" map={map} />
-            <meshBasicMaterial attach="material-4" color="white" />
-            <meshBasicMaterial attach="material-5" color="white" />
-          </mesh>
-          <CuboidCollider args={[.25,.025,.35]} />
-        </RigidBody>
+        <mesh key={key} ref={ref} api={api} >
+          <boxGeometry args={[.5,.01,.7]}  />
+          <meshBasicMaterial attach="material-0" color="white" />
+          <meshBasicMaterial attach="material-1" color="white" />
+          <meshStandardMaterial attach="material-2" map={map} />
+          <meshStandardMaterial attach="material-3" map={map} />
+          <meshBasicMaterial attach="material-4" color="white" />
+          <meshBasicMaterial attach="material-5" color="white" />
+        </mesh>
+      //   <mesh ref={ref} castShadow receiveShadow>
+      //   <boxBufferGeometry args={args} />
+      //   <meshLambertMaterial color={color} />
+      // </mesh>
       )
     }
     return arr

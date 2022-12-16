@@ -12,7 +12,7 @@ import Computer from '../components/three/Computer'
 import {CSS3DDemo} from '../components/three/Computer'
 import Ground from '../components/three/Ground'
 import EnemyBasic from '../components/three/EnemyBasic'
-import { Physics, Debug } from "@react-three/rapier"
+import { Physics, Debug } from '@react-three/cannon'
 import { useGLTF, OrbitControls, Center, Effects, Preload, PointerLockControls, KeyboardControls, Sky } from '@react-three/drei'
 import create from 'zustand'
 import Cards, { dropCard } from '../components/three/Cards'
@@ -258,32 +258,34 @@ export default function index() {
         { name: "jump", keys: ["Space"] },
         { name: "run", keys: ["Shift"] },
       ]}>
-      <Canvas shadows camera={{ fov: 60 }} style={{height: '100vh'}}>
+      <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
         <Suspense fallback={<></>}>
           <Sky sunPosition={[100, 20, 100]} distance={5000} />
           <color attach="background" args={['#000000']} />
           <ambientLight intensity={.4} />
           <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
           <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
-          <Physics gravity={[0, -9.8, 0]}>
-            <Ground />
-            <PlayerComponent slap={slap} gameLoop={gameLoop} />
-            <Table />
-            {/* <EnemyBasic /> */}
-            <Cards />
-            <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" />
-            <Text position={[.2,2,-1.6]} rotation={[-Math.PI /2,0,Math.PI]} text="Start" />
-            <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" />
-            <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} />
-            <TurnText />
-            <PlayerText />
-            {/* <Scene2 /> */}
-            {/* <Scene /> */}
-            {/* <Debug /> */}
-            <Button position={[0, 2, -1.8]} action={start} color="green" />
-            {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
-            <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" />
-            <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" />
+          <Physics gravity={[0, -2, 0]}>
+            {/* <Debug color="black" scale={1}> */}
+              <Ground />
+              <PlayerComponent slap={slap} gameLoop={gameLoop} />
+              <Table />
+              {/* <EnemyBasic /> */}
+              <Cards />
+              <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" />
+              <Text position={[.2,2,-1.6]} rotation={[-Math.PI /2,0,Math.PI]} text="Start" />
+              <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" />
+              <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} />
+              <TurnText />
+              <PlayerText />
+              {/* <Scene2 /> */}
+              {/* <Scene /> */}
+              {/* <Debug /> */}
+              <Button position={[0, 2, -1.8]} action={start} color="green" />
+              {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
+              <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" />
+              <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" />
+            {/* </Debug> */}
           </Physics>
           <PointerLockControls />
           <Preload all />

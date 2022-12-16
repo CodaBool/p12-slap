@@ -3,7 +3,7 @@ import * as RAPIER from "@dimforge/rapier3d-compat"
 import { useRef, useEffect, useState, useCallback } from "react"
 import { useThree, useFrame } from "@react-three/fiber"
 import { useKeyboardControls } from "@react-three/drei"
-import { RigidBody, useRapier, CuboidCollider } from "@react-three/rapier"
+import { useBox } from '@react-three/cannon'
 import { useStore } from '../../pages'
 import { socket } from '../../constants'
 
@@ -14,13 +14,13 @@ const sideVector = new THREE.Vector3()
 // const rotation = new THREE.Vector3()
 
 export default function Player({ lerp = THREE.MathUtils.lerp, gameLoop, slap }) {
+  const [ref, api] = useBox(() => ({ type: 'Kinematic', position: [10,2,0]  }))
   const [locked, setLocked] = useState()
   const [prevCamera, setPrevCamera] = useState()
-
-  const ref = useRef()
-  const rapier = useRapier()
   const { scene, camera } = useThree()
   const [, get] = useKeyboardControls()
+  const velocity = useRef([0, 0, 0])
+  const position = useRef([0, 0, 0])
 
   useEffect(() => {
     // create a crosshair and attach to camera
@@ -34,19 +34,21 @@ export default function Player({ lerp = THREE.MathUtils.lerp, gameLoop, slap }) 
     camera.add( crosshair )
     crosshair.position.set( 0, 0, -1 )
 
-    // create deck
-
+    const unsubscribePos = api.position.subscribe(p => (position.current = p))
+    const unsubscribeVel = api.velocity.subscribe(v => (velocity.current = v))
     
     // update server position
     camera.rotation.set(0, Math.PI /2, 0)
     const interval = setInterval(() => {
       if (ref.current) {
-        socket.emit('update', {
-          cord: ref.current.translation(),
-        })
+        socket.emit('update', 'hi coords go here')
       }
     }, 40)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      unsubscribePos()
+      unsubscribeVel()
+    }
   }, [])
 
   // function removeCards(scene) {
@@ -82,6 +84,9 @@ export default function Player({ lerp = THREE.MathUtils.lerp, gameLoop, slap }) 
     }
   }
 
+  // console.log('api', api)
+  // console.log('ref', ref)
+
   useEffect(() => {
     window.addEventListener("mousedown", mouseEvent)
     window.addEventListener("keydown", keyEvent)
@@ -94,33 +99,31 @@ export default function Player({ lerp = THREE.MathUtils.lerp, gameLoop, slap }) 
   useFrame((state) => {
     if (locked) return
     const { forward, backward, left, right, jump, run } = get()
-    const velocity = ref.current.linvel()
     // update camera
     
-    camera.position.set(ref.current.translation().x, ref.current.translation().y  +2.5, ref.current.translation().z )
-
+    camera.position.set(position.current[0], position.current[1] + 2, position.current[2] )
     frontVector.set(0, 0, backward - forward)
     sideVector.set(left - right, 0, 0)
-
+    // console.log(ref.current.position.x, ref.current.position.y + 2.5, ref.current.position.z)
     direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(run?2*SPEED:SPEED).applyEuler(camera.rotation)
-    
-    ref.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
-    // jumping
-    const world = rapier.world.raw()
-    const ray = world.castRay(new RAPIER.Ray(ref.current.translation(), { x: 0, y: -1, z: 0 }))
-    const grounded = ray && ray.collider && Math.abs(ray.toi) <= 1.75
-    if (jump && grounded) ref.current.setLinvel({ x: 0, y: 7.5, z: 0 })
+
+    // console.log('set', direction.x, velocity.current[1], direction.z)
+    // if (direction.x > 1 || velocity.current[1] > 1 || direction.z > 1)
+    api.velocity.set(direction.x, velocity.current[1], direction.z)
+    // ref.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
+    // // jumping
+    // const world = rapier.world.raw()
+    // const ray = world.castRay(new RAPIER.Ray(ref.current.translation(), { x: 0, y: -1, z: 0 }))
+    // const grounded = ray && ray.collider && Math.abs(ray.toi) <= 1.75
+    // if (jump && grounded) ref.current.setLinvel({ x: 0, y: 7.5, z: 0 })
 
     // update socket
 
   })
   return (
-    <RigidBody ref={ref} colliders={false} mass={1} position={[10, 5, 0]} enabledRotations={[false, false, false]}>
-      <CuboidCollider args={[.5, 1.5, .5]} />
-      <mesh receiveShadow castShadow>
-        <boxGeometry args={[1, 3, 1]} scale={10} />
-        <meshStandardMaterial transparent opacity={0} color="blue" />
-      </mesh>
-    </RigidBody>
+    <mesh ref={ref}>
+      <boxGeometry args={[1, 3, 1]} scale={1} />
+      <meshStandardMaterial transparent opacity={0} />
+    </mesh>
   )
 }
