@@ -195,17 +195,26 @@ export default function index() {
     
     dropCard(cards, me.deck[0])
 
+    // see if the hand was lost
+    
+    // critical points
+    // counter is at 0 (no face dropped)
+    // counter starts (face dropped)
+    // ran out of cards ()
+
     // add to stack
     addToStack(me.deck[0])
     
     let gamers = Array.from(players)
 
     // check if J, Q, K, or A
+    let hasFace = false
     if (me.deck[0].includes('j') ||
         me.deck[0].includes('k') ||
         me.deck[0].includes('q') ||
         me.deck[0].includes('a')) {
       
+      hasFace = true
       // only include people with cards as those who can have a turn
       gamers = gamers.filter(gamer => gamer.deck.length)
 
@@ -228,6 +237,8 @@ export default function index() {
         gamers[i].deck.shift() 
       }
     }
+
+    
 
     setPlayers(gamers)
     socket.emit('update-to-server', gamers)
@@ -266,7 +277,7 @@ export default function index() {
             <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} />
             <TurnText />
             <PlayerText />
-            <Scene2 />
+            {/* <Scene2 /> */}
             {/* <Scene /> */}
             {/* <Debug /> */}
             <Button position={[0, 2, -1.8]} action={start} color="green" />
