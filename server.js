@@ -36,11 +36,18 @@ io.on('connection', socket => {
     socket.emit("joined", players)
   })
 
-  socket.on('update-to-server', gamers => {
-    for (const p of gamers) {
+  socket.on('update-to-server', data => {
+    for (const p of data.gamers) {
       players[p.id] = {...p}
     }
-    socket.broadcast.emit('update-to-clients', Object.values(players))
+    if (data.state == 'slap') {
+      // won a slap
+      socket.emit('resetAll')
+      socket.broadcast.emit('resetAll')
+    }
+    socket.broadcast.emit('update-to-clients', 
+      { players: Object.values(players), stack: data.stack, state: data.state }
+    )
   })
 
   // socket.on("rollDice", (data) => {
@@ -84,7 +91,7 @@ io.on('connection', socket => {
 
   socket.on('drop', data => {
     // TODO: sync deck
-    console.log('drop', data.key)
+    // console.log('drop', data.key)
     socket.broadcast.emit('dropAll', data.key)
   })
 

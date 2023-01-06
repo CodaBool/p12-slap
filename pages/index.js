@@ -17,7 +17,7 @@ import { useGLTF, OrbitControls, Center, Effects, Preload, PointerLockControls, 
 import create from 'zustand'
 import Cards, { dropCard } from '../components/three/Cards'
 import Button from '../components/three/Button'
-import Text, { TurnText, PlayerText } from '../components/three/Text'
+import Text, { TurnText, PlayerText, CardInfo } from '../components/three/Text'
 
 // https://codesandbox.io/s/pixelated-render-pass-forked-to503e?file=%2Fsrc%2FApp.js
 extend({ RenderPixelatedPass })
@@ -28,7 +28,7 @@ export const useStore = create(set => ({
   stack: [],
   setStack: stack => set(() => ({ stack })),
   addToStack: item => set(state => ({ 
-    stack: [item, ...state.stack]
+    stack: [...state.stack, item]
   })),
   setCards: cards => set(() => ({ cards })),
   modPlayer: moddedP => set(state => ( // this method will be subscribable with useEffect
@@ -120,16 +120,15 @@ export default function index() {
     })
 
     socket.on("disconnected", ioPlayer => {
-      // got a runtime error because of a null player
-      // happened 2x now in dev
+      // TODO: this will frequently cause a runtime error because of a null player
       console.log('trying to remove', ioPlayer)
       removePlayer(ioPlayer)
     })
     
-    socket.on('update-to-clients', gamers => {
-      console.log('game update', gamers)
-
-      setPlayers(gamers)
+    socket.on('update-to-clients', data => {
+      // console.log('game update', data)
+      setPlayers(data.players)
+      setStack(data.stack)
     })
 
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
@@ -138,7 +137,7 @@ export default function index() {
       socket.removeAllListeners('disconnected')
       socket.removeAllListeners('joined')
       socket.removeAllListeners('join')
-      socket.removeAllListeners('"deck-change"')
+      socket.removeAllListeners('deck-change')
     }
   }, [socket, players])
 
@@ -170,7 +169,7 @@ export default function index() {
     // update store
     setPlayers(gamers)
     // update room
-    socket.emit('update-to-server', gamers)
+    socket.emit('update-to-server', {gamers, stack: [], state:'start'})
   }
   
   function gameLoop() {
@@ -182,10 +181,9 @@ export default function index() {
     }
     if (!me.deck.length) {
       setErrMsg('you have no more cards')
+      // a new turn should be picked here
       return
-    } // a new turn should be picked here
-
-    console.log('DEBUG: drop', me.deck[0])
+    } 
 
     // assumes move is valid and server would not block action
     socket.emit('drop', {
@@ -228,8 +226,11 @@ export default function index() {
         index = -1
       }
       gamers[index + 1].turn = true
-      console.log('set to', gamers[index + 1].name, 'turn')
+      // console.log('set to', gamers[index + 1].name, 'turn')
     }
+
+    const tempStack = Array.from(stack)
+    tempStack.push(me.deck[0]) // push is mutable
 
     // remove index 0 card
     for (const i in gamers) {
@@ -238,14 +239,84 @@ export default function index() {
       }
     }
 
-    
-
     setPlayers(gamers)
-    socket.emit('update-to-server', gamers)
+    socket.emit('update-to-server', { gamers, stack: tempStack })
   }
 
   function slap() {
     console.log('slap', stack)
+    if (stack.length < 2) {
+      console.log('only', stack.length, ' card(s), bad slap')
+    } else {
+      // TODO: remove
+      winStack()
+  
+      // double
+      const latestType = stack.at(-1).charAt(0) // i.e. a, k, 4, 7
+      if (latestType == stack.at(-2).charAt(0)) {
+        console.log('DOUBLE slap of type', latestType)
+        winStack()
+        return
+      }
+  
+      // sandwich
+      if (stack.length > 2) {
+        if (latestType == stack.at(-3).charAt(0)) {
+          console.log('SANDWICH slap of type', latestType)
+          winStack()
+          return
+        }
+      }
+    }
+    setErrMsg('bad slap')
+
+    // burn 2 cards
+    const me = players.find(p => p.uid == uid)
+    let gamers = Array.from(players)
+    for (const i in gamers) {
+      if (gamers[i].uid == uid) {
+        console.log('original deck', gamers[i].deck)
+        // console.log('top card', gamers[i].deck.at(-1))
+        
+        // see if any cards to burn
+        if (!gamers[i].deck.length) return
+        // at least 1 card
+        for (let j = 0; j < gamers[i].deck.length; j++) {
+          // if (gamers[i].deck[j])
+
+        }
+        // gamers[i].deck.shift() 
+      }
+    }
+    if (!me.deck.length) {
+      // player should be removed
+    } 
+
+    // setPlayers(gamers)
+    // socket.emit('update-to-server', { gamers, stack: tempStack })
+  }
+
+  function winStack() {
+    let gamers = Array.from(players)
+
+    // remove whoever had turn before
+    let index = gamers.findIndex(p => p.turn == true)
+    gamers[index].turn = false
+
+    for (const i in gamers) {
+      if (gamers[i].uid == uid) {
+        gamers[i].turn = true // set it to my turn
+        gamers[i].deck.push(...stack) // mutable
+      }
+    }
+
+    setStack([])
+    setPlayers(gamers)
+    socket.emit('update-to-server', { gamers, stack: [], state: 'slap' })
+  }
+
+  function resetCards() {
+    // socket.emit('reset')
   }
   
   return (
@@ -272,19 +343,20 @@ export default function index() {
               <Table />
               {/* <EnemyBasic /> */}
               <Cards />
-              <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" />
+              {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
               <Text position={[.2,2,-1.6]} rotation={[-Math.PI /2,0,Math.PI]} text="Start" />
-              <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" />
+              {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
               <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} />
               <TurnText />
+              <CardInfo />
               <PlayerText />
               {/* <Scene2 /> */}
               {/* <Scene /> */}
               {/* <Debug /> */}
               <Button position={[0, 2, -1.8]} action={start} color="green" />
               {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
-              <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" />
-              <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" />
+              {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
+              {/* <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" /> */}
             {/* </Debug> */}
           </Physics>
           <PointerLockControls />

@@ -63,9 +63,9 @@ const assets = [
 
 export function dropCard(cards, key) {
 
-  console.log('teleport', key)
+  // console.log('teleport', key)
   const card = cards.find(card => card.key === key)
-  console.log(card)
+  // console.log(card)
   card.ref.current.api.wakeUp()
   // card.ref.current.api.mass.set(1)
   card.ref.current.api.position.set(0,3.5,0)
@@ -82,6 +82,7 @@ const cardMaterial = 'card'
 export default function Cards() {
   const [localCards, setLocalCards] = useState(createCards())
   const cards = useStore(state => state.cards)
+  const stack = useStore(state => state.stack)
   const setCards = useStore(state => state.setCards)
   const setPlayers = useStore(state => state.setPlayers)
 
@@ -99,43 +100,18 @@ export default function Cards() {
       dropCard(cards, key)
     })
     socket.on('resetAll', () => {
+      console.log('resetAll happened')
       localCards.forEach((card, i) => {
-        card.ref.current.setTranslation({ x: 1 * i, y: -3, z: 0 }, true)
-        card.ref.current.setRotation({ w: 1, x: 0, y: 0, z: 0 }, true)
+        card.ref.current.api.wakeUp()
+        card.ref.current.api.position.set(1 * i, 1, 100)
+        card.ref.current.api.rotation.set(0,0,0)
       })
-      // TODO: dry this code, duplicate of index.js
-      // Temporary local play
-      const playersTemp = [new Player("luigi", 123), new Player("mario", 456)]
-  
-      // deal cards
-      const evenlyDealt = breakIntoParts(localCards.length, playersTemp.length)
-      evenlyDealt.forEach((size, i) => {
-        playersTemp[i].deck = []
-        for (const j in [...Array(size).keys()]) {
-          
-          playersTemp[i].deck.push(localCards[Math.floor(Math.random()*localCards.length)])
-        }
-      })
-      
-      // set a random first player
-      const rand = Math.floor(Math.random()*playersTemp.length)
-  
-      const index = playersTemp.findIndex(p => p.turn == true)
-      if (index > 0) {
-        playersTemp[index].turn = false
-      }
-      playersTemp[rand].turn = true
-
-      // TODO: find a way to setTurnName globally
-      // setTurnName(playersTemp[rand].name)
-  
-      setPlayers(playersTemp)
     })
     return () => {
       socket.removeAllListeners('resetAll')
       socket.removeAllListeners('dropAll')
     }
-  }, [socket, cards]) // adding 'cards' to dependency breaks player joining
+  }, [socket, cards, localCards]) // adding 'cards' to dependency breaks player joining
 
   function createCards() {
     const arr = []

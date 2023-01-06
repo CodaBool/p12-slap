@@ -31,7 +31,6 @@ export default function Cube(props) {
   const onClick = useCallback((e) => {
 
     e.stopPropagation()
-    console.log('hi')
     // const { x, y, z } = ref.current.translation()
     // const dir = [
     //   [x + 1, y, z],

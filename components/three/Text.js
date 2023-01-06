@@ -24,7 +24,7 @@ export function TurnText() {
   const players = useStore(state => state.players)
 
   useEffect(() => {
-    console.log(players)
+    // console.log(players)
     for (const p of players) {
       if (p.turn && p.name !== text) {
         setText(p.name)
@@ -71,6 +71,34 @@ export function PlayerText() {
         <textGeometry args={[otherNames, { font, size: .1, height: .02,  }]} />
         <meshStandardMaterial attach='material' color='white' />
       </mesh>
+    </>
+  )
+}
+
+export function CardInfo() {
+  const [text, setText] = useState('empty stack')
+  const stack = useStore(state => state.stack)
+
+  useEffect(() => {
+    let txt = ""
+    for (const s of stack) {
+      txt += s + '\n'
+    }
+    setText(txt)
+  }, [stack])
+
+  if (!text) return
+
+  return (
+    <>
+      <mesh position={[2,4,0]} rotation={[0,0,0]}>
+        <textGeometry args={[text, { font, size: .1, height: .02 }]} />
+        <meshStandardMaterial attach='material' color='blue' />
+      </mesh>
+      {/* <mesh position={[1,3.8,0]} rotation={[0,0,0]}>
+        <textGeometry args={[otherNames, { font, size: .1, height: .02,  }]} />
+        <meshStandardMaterial attach='material' color='white' />
+      </mesh> */}
     </>
   )
 }
