@@ -19,4 +19,4 @@
 
 # Bugs
 - ~~[running in mount twice](https://stackoverflow.com/a/69076030/15428240)~~ this should be solved now
-
+- (feature?) you will be able to slap on cards which on burned.

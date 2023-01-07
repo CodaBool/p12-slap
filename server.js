@@ -90,9 +90,7 @@ io.on('connection', socket => {
   })
 
   socket.on('drop', data => {
-    // TODO: sync deck
-    // console.log('drop', data.key)
-    socket.broadcast.emit('dropAll', data.key)
+    socket.broadcast.emit('dropAll', { card: data.key, burn: data.burn, secondBurn: data.secondBurn })
   })
 
   socket.on('reset', () => {

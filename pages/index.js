@@ -27,8 +27,11 @@ export const useStore = create(set => ({
   players: [],
   stack: [],
   setStack: stack => set(() => ({ stack })),
-  addToStack: item => set(state => ({ 
+  addToStackTop: item => set(state => ({ 
     stack: [...state.stack, item]
+  })),
+  addToStackBottom: item => set(state => ({ 
+    stack: [item, ...state.stack]
   })),
   setCards: cards => set(() => ({ cards })),
   modPlayer: moddedP => set(state => ( // this method will be subscribable with useEffect
@@ -92,7 +95,8 @@ export default function index() {
   const modPlayer = useStore(state => state.modPlayer)
   const stack = useStore(state => state.stack)
   const setStack = useStore(state => state.setStack)
-  const addToStack = useStore(state => state.addToStack)
+  const addToStackTop = useStore(state => state.addToStackTop)
+  const addToStackBottom = useStore(state => state.addToStackBottom)
 
   useEffect(() => {
     socket.on("join", ioPlayers => {
@@ -126,7 +130,7 @@ export default function index() {
     })
     
     socket.on('update-to-clients', data => {
-      // console.log('game update', data)
+      console.log('state', data)
       setPlayers(data.players)
       setStack(data.stack)
     })
@@ -201,7 +205,7 @@ export default function index() {
     // ran out of cards ()
 
     // add to stack
-    addToStack(me.deck[0])
+    addToStackTop(me.deck[0])
     
     let gamers = Array.from(players)
 
@@ -249,7 +253,7 @@ export default function index() {
       console.log('only', stack.length, ' card(s), bad slap')
     } else {
       // TODO: remove
-      winStack()
+      // winStack()
   
       // double
       const latestType = stack.at(-1).charAt(0) // i.e. a, k, 4, 7
@@ -271,7 +275,7 @@ export default function index() {
     setErrMsg('bad slap')
 
     // burn 2 cards
-    const me = players.find(p => p.uid == uid)
+    // const me = players.find(p => p.uid == uid)
     let gamers = Array.from(players)
     for (const i in gamers) {
       if (gamers[i].uid == uid) {
@@ -279,18 +283,79 @@ export default function index() {
         // console.log('top card', gamers[i].deck.at(-1))
         
         // see if any cards to burn
+        console.log('checking deck for at least 1 card =', gamers[i].deck.length)
         if (!gamers[i].deck.length) return
         // at least 1 card
-        for (let j = 0; j < gamers[i].deck.length; j++) {
-          // if (gamers[i].deck[j])
 
+        // take next card
+        let burnedCard = gamers[i].deck.shift()
+        console.log('burned card', burnedCard)
+        console.log('deck after shift', gamers[i].deck)
+        console.log('emitting drop for others')
+        socket.emit('drop', {
+          id: gamers[i].id,
+          key: burnedCard,
+          burn: true
+        })
+        console.log('dropping burned card to table')
+        dropCard(cards, burnedCard, true)
+        console.log('adding to bottom of stack')
+        
+        addToStackBottom(burnedCard)
+        
+
+        // create new stack to update all clients with
+        const tempStack = Array.from(stack)
+        tempStack.unshift(burnedCard) // push is mutable
+        console.log('just unshifted with new arr', tempStack)
+
+        if (gamers[i].deck.length) {
+          console.log('you still have cards, I should continue...length =', gamers[i].deck.length)
+
+          // take next card
+          burnedCard = gamers[i].deck.shift()
+          console.log('burned card', burnedCard)
+          console.log('deck after shift', gamers[i].deck)
+          console.log('emitting drop for others')
+          socket.emit('drop', {
+            id: gamers[i].id,
+            key: burnedCard,
+            burn: true,
+            secondBurn: true
+          })
+          console.log('dropping burned card to table')
+          dropCard(cards, burnedCard, true, true)
+          console.log('adding to bottom of stack')
+          
+          addToStackBottom(burnedCard)
+          
+
+          // create new stack to update all clients with
+          tempStack.unshift(burnedCard) // push is mutable
+          console.log('just unshifted with new arr', tempStack)
         }
-        // gamers[i].deck.shift() 
+
+        // check if youre out of cards and turn should change
+        if (!gamers[i].deck.length && gamers[i].turn) {
+          console.log('ran out of cards and it was my turn!')
+          const gamersWithCardsLeft = gamers.filter(gamer => gamer.deck.length)
+
+          // TODO: could be a goal state if last opponent card is dropped
+          if (gamersWithCardsLeft.length < 2) console.log('SPECIAL CASE!')
+    
+          // set next turn
+          let index = gamersWithCardsLeft.findIndex(p => p.turn == true)
+          gamersWithCardsLeft[index].turn = false
+          if (index == gamersWithCardsLeft.length - 1) {
+            index = -1
+          }
+          gamersWithCardsLeft[index + 1].turn = true
+        }
+
+        setPlayers(gamers)
+        socket.emit('update-to-server', { gamers, stack: tempStack })
       }
     }
-    if (!me.deck.length) {
-      // player should be removed
-    } 
 
     // setPlayers(gamers)
     // socket.emit('update-to-server', { gamers, stack: tempStack })

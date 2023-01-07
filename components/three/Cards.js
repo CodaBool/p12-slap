@@ -61,16 +61,24 @@ const assets = [
   'queen_of_spades.png'
 ]
 
-export function dropCard(cards, key) {
+export function dropCard(cards, key, burn, secondBurn) {
 
   // console.log('teleport', key)
   const card = cards.find(card => card.key === key)
-  // console.log(card)
   card.ref.current.api.wakeUp()
-  // card.ref.current.api.mass.set(1)
-  card.ref.current.api.position.set(0,3.5,0)
-  const tilt = Math.random() > .5
-  card.ref.current.api.rotation.set(2.5,Math.random()*500 * tilt ? -.1:.1,.2)
+  if (burn) {
+    console.log('burn')
+    if (secondBurn) {
+      card.ref.current.api.position.set(1,4,0)
+    } else {
+      card.ref.current.api.position.set(1,3.5,0)
+    }
+    card.ref.current.api.rotation.set(2.5,0,.2)
+  } else {
+    card.ref.current.api.position.set(0,3.5,0)
+    const tilt = Math.random() > .5
+    card.ref.current.api.rotation.set(2.5,Math.random()*500 * tilt ? -.1:.1,.2)
+  }
   // console.log(card)
   //card.ref.current.setTranslation({ x: 0, y: 5, z: 0 }, true)
   // TODO: this seems like it's relative rotation and could casue issues
@@ -96,8 +104,8 @@ export default function Cards() {
   }, [localCards])
 
   useEffect(() => {
-    socket.on('dropAll', key => {
-      dropCard(cards, key)
+    socket.on('dropAll', data => {
+      dropCard(cards, data.card, data.burn)
     })
     socket.on('resetAll', () => {
       console.log('resetAll happened')
