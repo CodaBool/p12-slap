@@ -36,17 +36,22 @@ io.on('connection', socket => {
     socket.emit("joined", players)
   })
 
+  socket.on("status", status => {
+    console.log('emit status', status)
+    socket.broadcast.emit('status', status) // only sent to others
+  })
+
   socket.on('update-to-server', data => {
-    for (const p of data.gamers) {
+    for (const p of data.players) {
       players[p.id] = {...p}
     }
-    if (data.state == 'slap') {
-      // won a slap
+    if (data.state == 'win') {
+      // won a slap or duel
       socket.emit('resetAll')
       socket.broadcast.emit('resetAll')
     }
     socket.broadcast.emit('update-to-clients', 
-      { players: Object.values(players), stack: data.stack, state: data.state }
+      { players: Object.values(players), stack: data.stack, state: data.state, face: data.faceOwner }
     )
   })
 

@@ -67,7 +67,7 @@ export function dropCard(cards, key, burn, secondBurn) {
   const card = cards.find(card => card.key === key)
   card.ref.current.api.wakeUp()
   if (burn) {
-    console.log('burn')
+    // console.log('burn')
     if (secondBurn) {
       card.ref.current.api.position.set(1,4,0)
     } else {
@@ -90,9 +90,7 @@ const cardMaterial = 'card'
 export default function Cards() {
   const [localCards, setLocalCards] = useState(createCards())
   const cards = useStore(state => state.cards)
-  const stack = useStore(state => state.stack)
   const setCards = useStore(state => state.setCards)
-  const setPlayers = useStore(state => state.setPlayers)
 
   useEffect(() => {
     if (localCards.length) {
@@ -108,7 +106,7 @@ export default function Cards() {
       dropCard(cards, data.card, data.burn)
     })
     socket.on('resetAll', () => {
-      console.log('resetAll happened')
+      // console.log('resetAll happened')
       localCards.forEach((card, i) => {
         card.ref.current.api.wakeUp()
         card.ref.current.api.position.set(1 * i, 1, 100)
