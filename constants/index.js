@@ -1,7 +1,7 @@
 import io from 'socket.io-client'
 import { useState, useEffect } from 'react'
 //forces the transport to be only websocket. This skips an initial HTTP request & upgrade
-const domain = process.env.REACT_APP_SOCKET_DOMAIN
+const domain = process.env.REACT_APP_SOCKET_DOMAIN || 'http://localhost'
 // const domain = process.env.REACT_APP_SOCKET_DOMAIN || 'http://localhost'
 export const socket = io.connect(domain, {transports: ['websocket']})
 

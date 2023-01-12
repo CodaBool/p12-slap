@@ -9,6 +9,7 @@ import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
 // import Table2 from '../components/three/Table2'
 import Computer from '../components/three/Computer'
+import Modal from '../components/Modal'
 import  {CSS3DDemo } from '../components/three/Computer'
 import Ground from '../components/three/Ground'
 import EnemyBasic from '../components/three/EnemyBasic'
@@ -55,7 +56,7 @@ function Scene2() {
   )
 }
 
-const randomName = (Math.random() + 1).toString(36).substring(7)
+let randomName = (Math.random() + 1).toString(36).substring(7)
 export const uid = Math.random().toString(16).slice(2)
 export let faceOwner = ''
 export let stack = []
@@ -65,6 +66,7 @@ export default function index() {
   const [errMsg, setErrMsg] = useState()
   const [playersState, setPlayersState] = useState()
   const [stackState, setStackState] = useState()
+  const [name, setName] = useState('')
   const setCountdown = useStore(state => state.setCountdown)
   const status = useStore(state => state.status)
   const setStatus = useStore(state => state.setStatus)
@@ -134,10 +136,13 @@ export default function index() {
   }, [socket])
 
   useEffect(() => {
-    const me = new Player(randomName, uid)
+    const playersWithMyUID = players.find(p => p.uid == uid)
+    console.log(playersWithMyUID)
+    if (!name && !playersWithMyUID?.length) return
+    const me = new Player(name, uid)
     socket.emit('join', me)
     players.push(me)
-  }, [])
+  }, [name])
 
   useEffect(() => {
     const inter = setInterval(() => {
@@ -156,6 +161,8 @@ export default function index() {
     const timeout = setTimeout(() => setStatus(null), 5000)
     return () => clearTimeout(timeout)
   }, [status])
+
+
 
   function start() {
     // NEAR DUPLICATE of resetAll in <Cards /> this could be dried
@@ -487,7 +494,7 @@ export default function index() {
               <Text position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
               <TurnText players={playersState} />
               <Timer />
-              <CardInfo stack={stackState} />
+              {/* <CardInfo stack={stackState} /> */}
               <PlayerText players={playersState} />
               {/* <Scene2 /> */}
               {/* <Scene /> */}
@@ -502,6 +509,7 @@ export default function index() {
           <Preload all />
         </Suspense>
       </Canvas>
+      <Modal name={name} setName={setName} />
     </KeyboardControls>
   )
 }

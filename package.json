@@ -7,7 +7,7 @@
     "build": "next build && next export",
     "n": "nodemon ./server.js localhost 8080",
     "start": "node server.js",
-    "develop": "concurrently \"next dev\" \"nodemon ./server.js localhost 8080\""
+    "develop": "concurrently \"next dev\" \"nodemon ./server.js localhost 80\""
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.10.0",
