@@ -1,13 +1,31 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const http = require('http').Server(app)
 const io = require('socket.io')(http, {
-  cors: {
-    origins: ['http://localhost:8080']
-  }
+  cors: { origin: '*' }
 })
+const cors = require('cors')
+
+// middleware
+app.use(cors())
+
+const PORT = process.env.PORT || 8080
+
+const path = require('path')
+
+app.use('/', express.static(path.join(__dirname, 'out')))
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, './out/index.html'))
+})
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, './out/404.html'))
+})
+
 // const util = require('util')
-http.listen(8080, () => console.log('--> http://localhost:8080'))
+
+
 
 const players = {}
 const game = { stack: [] }
@@ -181,3 +199,8 @@ io.on('connection', socket => {
 //   console.log(`getRooms: >>`, list);
 //   return list;
 // }
+
+http.listen(PORT, err => {
+  if (err) throw err
+  console.log(`----> http://localhost:${PORT}`)
+})
