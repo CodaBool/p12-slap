@@ -10,7 +10,7 @@ const cors = require('cors')
 // middleware
 app.use(cors())
 
-const PORT = process.env.PORT || 8080
+const PORT = process.env.PORT || 80
 
 const path = require('path')
 
