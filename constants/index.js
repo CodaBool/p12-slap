@@ -1,7 +1,9 @@
 import io from 'socket.io-client'
 import { useState, useEffect } from 'react'
 //forces the transport to be only websocket. This skips an initial HTTP request & upgrade
-export const socket = io.connect('http://localhost:8080', {transports: ['websocket']})
+const domain = process.env.REACT_APP_SOCKET_DOMAIN
+// const domain = process.env.REACT_APP_SOCKET_DOMAIN || 'http://localhost'
+export const socket = io.connect(domain, {transports: ['websocket']})
 
 export const breakIntoParts = (num, parts) => 
         [...Array(parts)].map((_,i) => 

@@ -166,7 +166,7 @@ export default function index() {
     setStatus(null)
 
     // deals cards
-    const evenlyDealt = breakIntoParts(10, players.length)
+    const evenlyDealt = breakIntoParts(cardKeys.length, players.length)
     shuffleArr(cardKeys)
 
     evenlyDealt.forEach((size, i) => {
