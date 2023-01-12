@@ -2,9 +2,7 @@ import * as THREE from "three"
 import { useLoader } from '@react-three/fiber'
 import { useBox, useContactMaterial } from '@react-three/cannon'
 import { useMemo, useEffect, useState, useRef } from 'react'
-import { Player } from '../../constants/class'
-import { useStore } from '../../pages'
-import { socket, breakIntoParts } from '../../constants'
+import { socket } from '../../constants'
 
 const assets = [
   '10_of_clubs.png',
@@ -61,13 +59,13 @@ const assets = [
   'queen_of_spades.png'
 ]
 
-export function dropCard(cards, key, burn, secondBurn) {
+export const cardKeys = []
+const cardRefs = []
 
-  // console.log('teleport', key)
-  const card = cards.find(card => card.key === key)
+export function dropCard(key, burn, secondBurn) {
+  const card = cardRefs.find(card => card.key === key)
   card.ref.current.api.wakeUp()
   if (burn) {
-    // console.log('burn')
     if (secondBurn) {
       card.ref.current.api.position.set(1,4,0)
     } else {
@@ -79,35 +77,30 @@ export function dropCard(cards, key, burn, secondBurn) {
     const tilt = Math.random() > .5
     card.ref.current.api.rotation.set(2.5,Math.random()*500 * tilt ? -.1:.1,.2)
   }
-  // console.log(card)
-  //card.ref.current.setTranslation({ x: 0, y: 5, z: 0 }, true)
-  // TODO: this seems like it's relative rotation and could casue issues
-  //card.ref.current.setRotation({ w: 1, x: 2, y: Math.random()*.1 * tilt ? -1:1, z: 0 }, true)
 }
 
 const cardMaterial = 'card'
 
 export default function Cards() {
-  const [localCards, setLocalCards] = useState(createCards())
-  const cards = useStore(state => state.cards)
-  const setCards = useStore(state => state.setCards)
+  const [cards, setCards] = useState(createCards())
 
   useEffect(() => {
-    if (localCards.length) {
-      if (cards.length === 0) {
-        // TODO: see if store can be used for this whole component
-        setCards(localCards)
+    if (cards.length && !cardKeys.length) {
+      for (const fileName of assets) {
+        cardKeys.push(fileName.split('_')[0].charAt(0) + fileName.split('_')[2].charAt(0))
+      }
+      for (const card of cards) {
+        cardRefs.push(card)
       }
     }
-  }, [localCards])
+  }, [cards])
 
   useEffect(() => {
     socket.on('dropAll', data => {
-      dropCard(cards, data.card, data.burn)
+      dropCard(data.card, data.burn)
     })
     socket.on('resetAll', () => {
-      // console.log('resetAll happened')
-      localCards.forEach((card, i) => {
+      cards.forEach((card, i) => {
         card.ref.current.api.wakeUp()
         card.ref.current.api.position.set(1 * i, 1, 100)
         card.ref.current.api.rotation.set(0,0,0)
@@ -117,7 +110,7 @@ export default function Cards() {
       socket.removeAllListeners('resetAll')
       socket.removeAllListeners('dropAll')
     }
-  }, [socket, cards, localCards]) // adding 'cards' to dependency breaks player joining
+  }, [socket, cards]) // adding 'cards' to dependency breaks player joining
 
   function createCards() {
     const arr = []
@@ -144,16 +137,12 @@ export default function Cards() {
           <meshBasicMaterial attach="material-4" color="white" />
           <meshBasicMaterial attach="material-5" color="white" />
         </mesh>
-      //   <mesh ref={ref} castShadow receiveShadow>
-      //   <boxBufferGeometry args={args} />
-      //   <meshLambertMaterial color={color} />
-      // </mesh>
       )
     }
     return arr
   }
 
-  return localCards
+  return cards
 }
 
 

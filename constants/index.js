@@ -1,5 +1,5 @@
 import io from 'socket.io-client'
-
+import { useState, useEffect } from 'react'
 //forces the transport to be only websocket. This skips an initial HTTP request & upgrade
 export const socket = io.connect('http://localhost:8080', {transports: ['websocket']})
 
@@ -27,4 +27,30 @@ export function shuffleArr(array) {
   }
 
   return array;
+}
+
+export function debounce(func, wait, immediate) {
+	var timeout
+	return function() {
+		var context = this, args = arguments
+		var later = function() {
+			timeout = null
+			if (!immediate) func.apply(context, args)
+		}
+		var callNow = immediate && !timeout
+		clearTimeout(timeout)
+		timeout = setTimeout(later, wait)
+		if (callNow) func.apply(context, args)
+	}
+}
+
+export function useDebounce(value, timeout) {
+  const [state, setState] = useState(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => setState(value), timeout)
+    return () => clearTimeout(handler)
+  }, [value, timeout])
+
+  return state
 }

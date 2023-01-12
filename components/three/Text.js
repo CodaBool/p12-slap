@@ -4,24 +4,33 @@ import roboto from "./font-roboto.json"
 import { extend } from "@react-three/fiber"
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
 import { useStore, uid } from '../../pages'
+import { debounce } from '../../constants'
 
 const font = new FontLoader().parse(roboto)
 extend({ TextGeometry })
 
-export default function Text({ text, position, rotation, scale, fading }) {
+export default function Text({ text, position, rotation, scale, setText, players }) {
   const [opacity, setOpacity] = useState(1)
+  let timeout = null
 
   useEffect(() => {
-    // console.log(text)
-    if (fading && text) {
-      setTimeout(() => setOpacity(1), 4000)
-      setTimeout(() => setOpacity(.8), 5000)
-      setTimeout(() => setOpacity(.6), 6000)
-      setTimeout(() => setOpacity(.4), 7000)
-      setTimeout(() => setOpacity(.2), 8000)
-      setTimeout(() => setOpacity(0), 9000)
+    if (!text || !setText) return
+    clearTimeout(timeout)
+    timeout = setTimeout(() => setText(null), 3000)
+  }, [text, setText])
+
+  useEffect(() => {
+    if (text == 'Start') {
+      let foundATurn = false
+      for (const p of players) {
+        if (p.turn) {
+          foundATurn = true
+          setOpacity(0)
+        }
+      }
+      if (!foundATurn) setOpacity(1)
     }
-  }, [text])
+  }, [players])
 
   if (!text) return
   
@@ -36,9 +45,16 @@ export default function Text({ text, position, rotation, scale, fading }) {
 export function TurnText({ players }) {
   const [text, setText] = useState()
   const [color, setColor] = useState()
+  // const status = useStore(state => state.status)
 
   useEffect(() => {
+    // if (status == 'ready') {
+    //   setText(null)
+    //   return
+    // }
+    let foundATurn = false
     for (const p of players) {
+      if (p.turn) foundATurn = true
       if (p.turn && p.name !== text) {
         if (p.uid === uid) {
           setText('Your Turn')
@@ -49,6 +65,7 @@ export function TurnText({ players }) {
         }
       }
     }
+    if (!foundATurn) setText(null)
   }, [players])
 
   if (!text) return
@@ -66,6 +83,14 @@ export function PlayerText({ players }) {
   const [myName, setMyName] = useState()
 
   useEffect(() => {
+    let foundATurn = false
+    for (const p of players) {
+      if (p.turn) foundATurn = true
+    }
+    if (!foundATurn) {
+      setMyName(null)
+      return
+    }
     let txt = ""
     for (const p of players) {
       if (p.uid === uid) {
@@ -77,7 +102,7 @@ export function PlayerText({ players }) {
     setOtherNames(txt)
   }, [players])
 
-  if (!otherNames) return
+  if (!otherNames || !myName) return
 
   return (
     <>
