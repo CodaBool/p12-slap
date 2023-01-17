@@ -54,6 +54,11 @@ io.on('connection', socket => {
     socket.emit("joined", players)
   })
 
+  socket.on('chat', data => {
+    // console.log('sending message:', data.msg)
+    socket.broadcast.emit('chat', data)
+  })
+
   socket.on("status", status => {
     console.log('emit status', status)
     socket.broadcast.emit('status', status) // only sent to others

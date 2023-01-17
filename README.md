@@ -20,3 +20,10 @@
 # Bugs
 - ~~[running in mount twice](https://stackoverflow.com/a/69076030/15428240)~~ this should be solved now
 - (feature?) you will be able to slap on cards which on burned.
+
+# Compression
+MeshoptDecoder is already used in useGLTF loader
+
+however, it is out of date, you can check the date on it [here](https://github.com/pmndrs/three-stdlib/blob/main/src/libs/MeshoptDecoder.js)
+
+compared to the newer decoder [here](https://github.com/zeux/meshoptimizer/blob/master/js/meshopt_decoder.js)

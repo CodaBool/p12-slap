@@ -1,7 +1,7 @@
 import * as THREE from "three"
 import { useLoader } from '@react-three/fiber'
-import { useBox, useContactMaterial } from '@react-three/cannon'
-import { useMemo, useEffect, useState, useRef } from 'react'
+import { RigidBody, CuboidCollider } from "@react-three/rapier"
+import React, { useMemo, useEffect, useState, useRef } from 'react'
 import { socket } from '../../constants'
 
 const assets = [
@@ -60,88 +60,104 @@ const assets = [
 ]
 
 export const cardKeys = []
-const cardRefs = []
+const apiRefs = []
 
 export function dropCard(key, burn, secondBurn) {
-  const card = cardRefs.find(card => card.key === key)
-  card.ref.current.api.wakeUp()
+  const card = apiRefs.find(obj => obj.name === key)
+  // card.current.api.wakeUp()
   if (burn) {
     if (secondBurn) {
-      card.ref.current.api.position.set(1,4,0)
+      card.ref.current.setTranslation({ x: 1, y: 4, z: 0 }, true)
     } else {
-      card.ref.current.api.position.set(1,3.5,0)
+      card.ref.current.setTranslation({ x: 1, y: 3.5, z: 0 }, true)
     }
-    card.ref.current.api.rotation.set(2.5,0,.2)
+    card.ref.current.setRotation({ w: 1, x: 2.5, y: 0, z: .2 }, true)
   } else {
-    card.ref.current.api.position.set(0,3.5,0)
+    card.ref.current.setTranslation({ x: 0, y: 3.5, z: 0 }, true)
     const tilt = Math.random() > .5
-    card.ref.current.api.rotation.set(2.5,Math.random()*500 * tilt ? -.1:.1,.2)
+    card.ref.current.setRotation({ w: 1, x: 2.5, y: Math.random()*500 * tilt ? -.1:.1, z: .2 }, true)
   }
 }
 
-const cardMaterial = 'card'
+function CardComponent({texture, i, name}) {
+  const ref = useRef()
+  apiRefs.push({ref, name})
+  return (
+    <RigidBody position={[1 * i,1,100]} ref={ref}>
+      <mesh>
+        <boxGeometry args={[.5,.04,.7]} />
+        <meshBasicMaterial attach="material-0" color="white" />
+        <meshBasicMaterial attach="material-1" color="white" />
+        <meshStandardMaterial attach="material-2" map={texture} />
+        <meshStandardMaterial attach="material-3" map={texture} />
+        <meshBasicMaterial attach="material-4" color="white" />
+        <meshBasicMaterial attach="material-5" color="white" />
+      </mesh>
+      <CuboidCollider args={[.25,.02,.35]} />
+    </RigidBody>
+  )
+}
 
 export default function Cards() {
-  const [cards, setCards] = useState(createCards())
+  const [cards, setCards] = useState()
 
   useEffect(() => {
-    if (cards.length && !cardKeys.length) {
-      for (const fileName of assets) {
-        cardKeys.push(fileName.split('_')[0].charAt(0) + fileName.split('_')[2].charAt(0))
-      }
-      for (const card of cards) {
-        cardRefs.push(card)
+    if (cards?.length && !cardKeys.length) {
+      for (const name of assets) {
+        cardKeys.push(name.split('_')[0].charAt(0) + name.split('_')[2].charAt(0))
       }
     }
   }, [cards])
 
   useEffect(() => {
+    if (!cards?.length) createCards()
     socket.on('dropAll', data => {
       dropCard(data.card, data.burn)
     })
     socket.on('resetAll', () => {
-      cards.forEach((card, i) => {
-        card.ref.current.api.wakeUp()
-        card.ref.current.api.position.set(1 * i, 1, 100)
-        card.ref.current.api.rotation.set(0,0,0)
+      apiRefs.forEach((obj, i) => {
+        obj.ref.current.setTranslation({ x: 1 * i, y: 1, z: 100 }, true)
+        obj.ref.current.setRotation({ w: 1, x: 0, y: 0, z: 0 }, true)
       })
     })
     return () => {
-      socket.removeAllListeners('resetAll')
-      socket.removeAllListeners('dropAll')
+      socket.off('resetAll')
+      socket.off('dropAll')
     }
-  }, [socket, cards]) // adding 'cards' to dependency breaks player joining
+  }, [cards])
 
   function createCards() {
-    const arr = []
-    for (const [i, name] of assets.entries()) {
-      
-      useContactMaterial(cardMaterial, cardMaterial, {
-        // contactEquationRelaxation: 3,
-        // contactEquationStiffness: 1e8,
-        friction: 100,
-        // frictionEquationStiffness: 1e8,
-        restitution: .1,
-      })
-      const [ref, api] = useBox(() => ({ position: [1 * i,1,100], mass: .01, args: [.5,.05,.7], material: cardMaterial}))
-      // api.sleep()
-      const map = useLoader(THREE.TextureLoader, '/assets/cards/' + name)
-      const key = name.split('_')[0].charAt(0) + name.split('_')[2].charAt(0)
-      arr.push(
-        <mesh key={key} ref={ref} api={api} >
-          <boxGeometry args={[.5,.01,.7]}  />
-          <meshBasicMaterial attach="material-0" color="white" />
-          <meshBasicMaterial attach="material-1" color="white" />
-          <meshStandardMaterial attach="material-2" map={map} />
-          <meshStandardMaterial attach="material-3" map={map} />
-          <meshBasicMaterial attach="material-4" color="white" />
-          <meshBasicMaterial attach="material-5" color="white" />
-        </mesh>
-      )
+    const promises = []
+    // if not doing async then use useLoader
+    for (const name of assets) {
+      promises.push(new THREE.TextureLoader().loadAsync('/assets/cards/' + name))
     }
-    return arr
+
+    Promise.allSettled(promises)
+      .then(results => {
+        const textureArr = []
+        results.forEach(result => {
+          if (result?.status == 'fulfilled') {
+            textureArr.push(result?.value)
+          } else {
+            console.log(`😨 something went wrong sending update for ${result?.value}`, result)
+          }
+        })
+        if (textureArr.length == 52) {
+          setCards(textureArr.map((texture, index) => {
+            const firstSplit = texture.source.data.src.split('/')
+            const secondSplit = firstSplit[firstSplit.length - 1].split('_')
+            const key = secondSplit[0].charAt(0) + secondSplit[2].charAt(0)
+            return <CardComponent texture={texture} key={texture.uuid} name={key} i={index} />
+          }
+          ))
+        } else {
+          console.log('failed to load cards', textureArr)
+        }
+      })
   }
 
+  if (!cards?.length) return
   return cards
 }
 

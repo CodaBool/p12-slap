@@ -10,6 +10,7 @@ export default function Button({ position, action, color, players }) {
   // }, [])
 
   useEffect(() => {
+    if (!players) return
     let foundATurn = false
     for (const p of players) {
       if (p.turn) {

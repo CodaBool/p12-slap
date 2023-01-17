@@ -4,21 +4,21 @@ import { useMemo, useEffect, Suspense, useState, useCallback, useReducer } from 
 import * as THREE from 'three'
 import { socket, breakIntoParts, shuffleArr, copy } from '../constants'
 import { Player } from '../constants/class'
-import Cube from '../components/three/Cube'
+// import Cube from '../components/three/Cube'
 import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
-// import Table2 from '../components/three/Table2'
-import Computer from '../components/three/Computer'
+// import Computer from '../components/three/Computer'
 import Modal from '../components/Modal'
+import UI from '../components/UI'
 import  {CSS3DDemo } from '../components/three/Computer'
 import Ground from '../components/three/Ground'
-import EnemyBasic from '../components/three/EnemyBasic'
-import { Physics, Debug } from '@react-three/cannon'
-import { useGLTF, OrbitControls, Center, Effects, Preload, PointerLockControls, KeyboardControls, Sky } from '@react-three/drei'
-import create from 'zustand'
+// import EnemyBasic from '../components/three/EnemyBasic'
+import { Physics, Debug } from "@react-three/rapier"
+import { Effects, Preload, PointerLockControls, KeyboardControls, Sky, Stats, stats  } from '@react-three/drei'
+import { create } from 'zustand'
 import Cards, { dropCard, cardKeys } from '../components/three/Cards'
 import Button from '../components/three/Button'
-import assert from 'assert' // assert.deepEqual(1, 2)
+import assert from 'assert'
 import Text, { TurnText, PlayerText, CardInfo, Timer } from '../components/three/Text'
 
 // https://codesandbox.io/s/pixelated-render-pass-forked-to503e?file=%2Fsrc%2FApp.js
@@ -36,11 +36,9 @@ function Scene() {
   const { size, scene, camera } = useThree()
   const resolution = useMemo(() => new THREE.Vector2(size.width, size.height), [size])
   if (camera) return (
-    <>
-      <Effects>
-        <renderPixelatedPass args={[resolution, 6, scene, camera]} />
-      </Effects>
-    </>
+    <Effects>
+      <renderPixelatedPass args={[resolution, 6, scene, camera]} />
+    </Effects>
   )
 }
 
@@ -56,7 +54,6 @@ function Scene2() {
   )
 }
 
-let randomName = (Math.random() + 1).toString(36).substring(7)
 export const uid = Math.random().toString(16).slice(2)
 export let faceOwner = ''
 export let stack = []
@@ -102,7 +99,7 @@ export default function index() {
     socket.on("disconnected", ioPlayer => {
       // TODO: this will frequently cause a runtime error because of a null player
       console.log('trying to remove', ioPlayer)
-      players = players.filter(p => p.id !== ioPlayer.id)
+      players = players.filter(p => p.id !== ioPlayer?.id)
     })
 
     socket.on("status", status => {
@@ -127,17 +124,16 @@ export default function index() {
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
     // useStore.subscribe( store => {} ) // don't know of a way this is useful yet
     return () => {
-      socket.removeAllListeners('disconnected')
-      socket.removeAllListeners('status')
-      socket.removeAllListeners('joined')
-      socket.removeAllListeners('join')
-      socket.removeAllListeners('deck-change')
+      socket.off('disconnected')
+      socket.off('status')
+      socket.off('joined')
+      socket.off('join')
+      socket.off('deck-change')
     }
-  }, [socket])
+  }, [])
 
   useEffect(() => {
     const playersWithMyUID = players.find(p => p.uid == uid)
-    console.log(playersWithMyUID)
     if (!name && !playersWithMyUID?.length) return
     const me = new Player(name, uid)
     socket.emit('join', me)
@@ -161,8 +157,6 @@ export default function index() {
     const timeout = setTimeout(() => setStatus(null), 5000)
     return () => clearTimeout(timeout)
   }, [status])
-
-
 
   function start() {
     // NEAR DUPLICATE of resetAll in <Cards /> this could be dried
@@ -464,52 +458,57 @@ export default function index() {
   }
   
   return (
-    <KeyboardControls
-      map={[
-        { name: "forward", keys: ["ArrowUp", "w", "W"] },
-        { name: "backward", keys: ["ArrowDown", "s", "S"] },
-        { name: "left", keys: ["ArrowLeft", "a", "A"] },
-        { name: "right", keys: ["ArrowRight", "d", "D"] },
-        { name: "jump", keys: ["Space"] },
-        { name: "run", keys: ["Shift"] },
-      ]}>
-      <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
-        <Suspense fallback={<></>}>
-          <Sky sunPosition={[100, 20, 100]} distance={5000} />
-          <color attach="background" args={['#000000']} />
-          <ambientLight intensity={.4} />
-          <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
-          <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
-          <Physics gravity={[0, -2, 0]}>
-            {/* <Debug color="black" scale={1}> */}
-              <Ground />
-              <PlayerComponent slap={slap} gameLoop={gameLoop} />
-              <Table />
-              {/* <EnemyBasic /> */}
-              <Cards />
-              {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
-              <Text position={[-.07, 2, -1.6]} rotation={[-Math.PI /2,0,0]} scale={.5} players={playersState} text="Start" />
-              {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
-              {/* <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} /> */}
-              <Text position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
-              <TurnText players={playersState} />
-              <Timer />
-              {/* <CardInfo stack={stackState} /> */}
-              <PlayerText players={playersState} />
-              {/* <Scene2 /> */}
-              {/* <Scene /> */}
-              {/* <Debug /> */}
-              <Button position={[0, 2, -1.8]} action={start} color="green" players={playersState} />
-              {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
-              {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
-              {/* <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" /> */}
-            {/* </Debug> */}
-          </Physics>
-          <PointerLockControls />
-          <Preload all />
-        </Suspense>
-      </Canvas>
-      <Modal name={name} setName={setName} />
-    </KeyboardControls>
+    <>
+      <KeyboardControls
+        map={[
+          { name: "forward", keys: ["ArrowUp", "w", "W"] },
+          { name: "backward", keys: ["ArrowDown", "s", "S"] },
+          { name: "left", keys: ["ArrowLeft", "a", "A"] },
+          { name: "right", keys: ["ArrowRight", "d", "D"] },
+          { name: "jump", keys: ["Space"] },
+          { name: "run", keys: ["Shift"] },
+        ]}>
+        <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
+          <Suspense fallback={<></>}>
+            <Stats showPanel={1} />
+            <Sky sunPosition={[100, 20, 100]} distance={5000} />
+            <color attach="background" args={['#000000']} />
+            <ambientLight intensity={.4} />
+            <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
+            <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
+            <Physics gravity={[0, -2, 0]}>
+              {/* <Debug color="black" scale={1}> */}
+                <Ground />
+                <PlayerComponent slap={slap} gameLoop={gameLoop} />
+                <Table />
+                {/* <Crosshair /> */}
+                {/* <EnemyBasic /> */}
+                <Cards />
+                {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
+                <Text position={[-.07, 2, -1.6]} rotation={[-Math.PI /2,0,0]} scale={.5} players={playersState} text="Start" />
+                {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
+                {/* <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} /> */}
+                <Text position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
+                <TurnText players={playersState} />
+                <Timer />
+                {/* <CardInfo stack={stackState} /> */}
+                <PlayerText players={playersState} />
+                {/* <Scene2 /> */}
+                {/* <Scene /> */}
+                {/* <Debug /> */}
+                <Button position={[0, 2, -1.8]} action={start} color="green" players={playersState} />
+                {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
+                {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
+                {/* <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" /> */}
+              {/* </Debug> */}
+            </Physics>
+            <PointerLockControls />
+            <Preload all />
+          </Suspense>
+        </Canvas>
+        <Modal name={name} setName={setName} />
+      </KeyboardControls>
+      <UI players={playersState} />
+    </>
   )
 }

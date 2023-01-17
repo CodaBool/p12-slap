@@ -17,6 +17,7 @@ export default function MyApp({ Component, pageProps }) {
       </Head>
       {/* <Navigation /> */}
       <main>
+        <div className="dot" />
         <Component {...pageProps} />
       </main>
     </>

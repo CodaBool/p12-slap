@@ -1,20 +1,18 @@
 import * as THREE from "three"
 import { useTexture } from "@react-three/drei"
-import { useBox, usePlane } from '@react-three/cannon'
-import { useStore } from '../../pages'
+import { CuboidCollider, RigidBody } from "@react-three/rapier"
 
 export default function Ground(props) {
-  const [topPlane] = usePlane(() => ({ rotation: [-Math.PI / 2, 0, 0], type: 'Static' }))
-  // const [bottomPlane] = usePlane(() => ({ rotation: [-Math.PI / 2, 0,0], type: 'Static', position: [0, -30, 0] })) //  position: [0, 0, 0]
-
   const texture = useTexture("/assets/floor.jpg")
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+  
   return (
-    <>
-      <mesh ref={topPlane} receiveShadow >
+    <RigidBody {...props} type="fixed" colliders={false}>
+      <mesh receiveShadow position={[0, 0, 0]} rotation-x={-Math.PI / 2}>
         <planeGeometry args={[1000, 1000]} />
         <meshStandardMaterial map={texture} map-repeat={[240, 240]} />
       </mesh>
-    </>
+      <CuboidCollider args={[1000, 2, 1000]} position={[0, -2, 0]} />
+    </RigidBody>
   )
 }

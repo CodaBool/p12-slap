@@ -20,6 +20,7 @@ export default function Text({ text, position, rotation, scale, setText, players
   }, [text, setText])
 
   useEffect(() => {
+    if (!players) return
     if (text == 'Start') {
       let foundATurn = false
       for (const p of players) {
@@ -52,6 +53,7 @@ export function TurnText({ players }) {
     //   setText(null)
     //   return
     // }
+    if (!players) return
     let foundATurn = false
     for (const p of players) {
       if (p.turn) foundATurn = true
@@ -83,6 +85,7 @@ export function PlayerText({ players }) {
   const [myName, setMyName] = useState()
 
   useEffect(() => {
+    if (!players) return
     let foundATurn = false
     for (const p of players) {
       if (p.turn) foundATurn = true

@@ -1,14 +1,46 @@
 import io from 'socket.io-client'
 import { useState, useEffect } from 'react'
 //forces the transport to be only websocket. This skips an initial HTTP request & upgrade
-export const socket = io.connect(process.env.REACT_APP_SOCKET_DOMAIN, {transports: ['websocket']})
+const domain = process.env.NEXT_PUBLIC_SOCKET_DOMAIN || 'http://p12.codabool.com'
+export const socket = io.connect(domain, {transports: ['websocket']})
+export const randomName = (Math.random() + 1).toString(36).substring(7)
 
+// split an array into even numbers
 export const breakIntoParts = (num, parts) => 
         [...Array(parts)].map((_,i) => 
           0|num/parts+(i < num%parts))
 
 export function copy(array) {
   return JSON.parse(JSON.stringify(array))
+}
+function isFlattenable(value) {
+  return true
+}
+function baseFlatten(array, depth, predicate, isStrict, result) {
+  predicate || (predicate = isFlattenable)
+  result || (result = [])
+
+  if (array == null) {
+    return result
+  }
+
+  for (const value of array) {
+    if (depth > 0 && predicate(value)) {
+      if (depth > 1) {
+        // Recursively flatten arrays (susceptible to call stack limits).
+        baseFlatten(value, depth - 1, predicate, isStrict, result)
+      } else {
+        result.push(...value)
+      }
+    } else if (!isStrict) {
+      result[result.length] = value
+    }
+  }
+  return result
+}
+export function flatten(array) {
+  const length = array == null ? 0 : array.length
+  return length ? baseFlatten(array, 1) : []
 }
 // fisher-yates / knuth shuffle
 export function shuffleArr(array) {
