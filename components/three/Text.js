@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { TextGeometry } from "three-stdlib"
 import roboto from "./font-roboto.json"
-import { extend } from "@react-three/fiber"
+import { extend, useFrame } from "@react-three/fiber"
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
 import { useStore, uid } from '../../pages'
 import { debounce } from '../../constants'
@@ -9,8 +9,9 @@ import { debounce } from '../../constants'
 const font = new FontLoader().parse(roboto)
 extend({ TextGeometry })
 
-export default function Text({ text, position, rotation, scale, setText, players }) {
+export default function Text({ text, position, rotation, scale, setText, players, spin }) {
   const [opacity, setOpacity] = useState(1)
+  const ref = useRef()
   let timeout = null
 
   useEffect(() => {
@@ -34,9 +35,16 @@ export default function Text({ text, position, rotation, scale, setText, players
   }, [players])
 
   if (!text) return
+
+  if (spin) {
+    useFrame((_, delta) => ref.current.rotation.y -= delta)
+
+    // useFrame((state, delta) => (ref.current.rotation.x += delta))
+
+  }
   
   return (
-    <mesh position={position} rotation={rotation} scale={scale}>
+    <mesh position={position} ref={ref} rotation={rotation} scale={scale}>
       <textGeometry args={[text, { font, size: .1, height: .02 }]} />
       <meshStandardMaterial attach='material' color='white' transparent opacity={opacity} />
     </mesh>

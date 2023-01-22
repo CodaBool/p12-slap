@@ -11,7 +11,7 @@ export default function Model() {
         geometry={nodes.defaultMaterial001.geometry}
         material={materials.DefaultMaterial}
         position={[0, .42, 0]}
-        rotation={[-Math.PI, 0, 0]}
+        rotation={[-Math.PI, Math.PI/4, 0]}
         scale={2}
       />
       <CylinderCollider args={[1.5,2,1]} position={[0, .54, 0]} />

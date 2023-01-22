@@ -7,6 +7,7 @@ import { Player } from '../constants/class'
 // import Cube from '../components/three/Cube'
 import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
+import PlayerV2 from '../components/three/PlayerV2'
 // import Computer from '../components/three/Computer'
 import Modal from '../components/Modal'
 import UI from '../components/UI'
@@ -28,6 +29,8 @@ export const useStore = create(set => ({
   faceOwner: '',
   status: 'ready',
   countdown: false,
+  locked: false,
+  setLocked: locked => set(() => ({ locked })),
   setStatus: status => set(() => ({ status })),
   setCountdown: countdown => set(() => ({ countdown })),
 }))
@@ -135,7 +138,7 @@ export default function index() {
   useEffect(() => {
     const playersWithMyUID = players.find(p => p.uid == uid)
     if (!name && !playersWithMyUID?.length) return
-    const me = new Player(name, uid)
+    const me = new Player(name, uid, 1)
     socket.emit('join', me)
     players.push(me)
   }, [name])
@@ -479,13 +482,14 @@ export default function index() {
             <Physics gravity={[0, -2, 0]}>
               {/* <Debug color="black" scale={1}> */}
                 <Ground />
-                <PlayerComponent slap={slap} gameLoop={gameLoop} />
+                {/* <PlayerComponent slap={slap} gameLoop={gameLoop} /> */}
+                <PlayerV2 slap={slap} gameLoop={gameLoop} players={playersState} />
                 <Table />
                 {/* <Crosshair /> */}
                 {/* <EnemyBasic /> */}
                 <Cards />
                 {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
-                <Text position={[-.07, 2, -1.6]} rotation={[-Math.PI /2,0,0]} scale={.5} players={playersState} text="Start" />
+                <Text position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
                 {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
                 {/* <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} /> */}
                 <Text position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
@@ -495,8 +499,8 @@ export default function index() {
                 <PlayerText players={playersState} />
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
-                {/* <Debug /> */}
-                <Button position={[0, 2, -1.8]} action={start} color="green" players={playersState} />
+                <Debug />
+                <Button position={[0, 2, 0]} action={start} color="green" players={playersState} />
                 {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
                 {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
                 {/* <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" /> */}

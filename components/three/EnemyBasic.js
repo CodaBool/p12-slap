@@ -101,11 +101,11 @@ export default function EnemyBasic(props) {
   const ref = useRef()
   return (
     <RigidBody ref={ref} colliders={false} mass={1} type="dynamic" position={[10, 5, 0]} enabledRotations={[false, false, false]}>
-    <CuboidCollider args={[.5, 1.5, .5]} />
-    <mesh receiveShadow castShadow>
-      <boxGeometry args={[1, 3, 1]} scale={10} />
-      <meshStandardMaterial color="red" transparent opacity={.5} />
-    </mesh>
-  </RigidBody>
+      <CuboidCollider args={[.5, 1.5, .5]} />
+      <mesh receiveShadow castShadow>
+        <boxGeometry args={[1, 3, 1]} scale={10} />
+        <meshStandardMaterial color="red" transparent opacity={.5} />
+      </mesh>
+    </RigidBody>
   )
 }

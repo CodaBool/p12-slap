@@ -59,6 +59,11 @@ io.on('connection', socket => {
     socket.broadcast.emit('chat', data)
   })
 
+  socket.on('sit', data => {
+    // console.log('sit', data)
+    socket.broadcast.emit('sit', data)
+  })
+
   socket.on("status", status => {
     console.log('emit status', status)
     socket.broadcast.emit('status', status) // only sent to others

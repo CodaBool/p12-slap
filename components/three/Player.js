@@ -104,7 +104,7 @@ export default function Player({ lerp = THREE.MathUtils.lerp, gameLoop, slap }) 
 
   })
   return (
-    <RigidBody ref={ref} colliders={false} position={[10, 1, 0]} enabledRotations={[false, false, false]}>
+    <RigidBody ref={ref} colliders={false} position={[-6, 1, 0]} enabledRotations={[false, false, false]}>
       <CuboidCollider args={[.5, 1.5, .5]} />
       <mesh receiveShadow castShadow>
         <boxGeometry args={[1, 3, 1]} scale={10} />

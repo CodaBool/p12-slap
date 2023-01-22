@@ -83,7 +83,7 @@ function CardComponent({texture, i, name}) {
   const ref = useRef()
   apiRefs.push({ref, name})
   return (
-    <RigidBody position={[1 * i,1,100]} ref={ref}>
+    <RigidBody position={[1 * i,1,100]} ref={ref} colliders={false}>
       <mesh>
         <boxGeometry args={[.5,.04,.7]} />
         <meshBasicMaterial attach="material-0" color="white" />

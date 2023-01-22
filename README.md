@@ -3,8 +3,16 @@
 - [basic](https://replit.com/talk/share/Simple-multiplayer-3D-FPS-using-Threejs/120692)
 - [threejs rapier](https://github.com/isaac-mason/sketches/tree/main/src/sketches/sketch-Rapier-RaycastVehicle)
 
+### Rapier
+- [github](https://github.com/Viki-17/react-character-collider/blob/bb6d8598fb71cb17b9a8db6304b20b7db8bff8f4/src/Soilder.jsx)
+- [github](https://github.com/myBooInvasion/virtual-reality/blob/b65e05110f7607905e8fb67ea67ebd8887de18f1/src/components/Soldier.jsx)
+- [github](https://github.com/Viki-17/react-character-collider/blob/bb6d8598fb71cb17b9a8db6304b20b7db8bff8f4/src/Player.jsx)
+- [github](https://github.com/mog3n/blocpass/blob/43d24aef44d485ddd3c1a131fa1e9d0b2fa860ba/src/character/Soldier.js)
+- [github](https://github.com/wewerlive/Eco-treats/blob/007f49c0eabde47bb48ff5992c6adc41c175b5df/src/components/eco-treat/Player.jsx)
+
 # Models
 - [Table](https://sketchfab.com/3d-models/low-poly-table-b940256ec5994e26a9e71289d1211b19)
+- [Chair](https://sketchfab.com/3d-models/chair-b07d263a7ab942e6935e77cd75bf1194)
 
 # Links
 - [docs](https://docs.pmnd.rs/react-three-fiber/getting-started/your-first-scene)
