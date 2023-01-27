@@ -2,9 +2,12 @@ import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
+import Overlay from 'react-bootstrap/Overlay'
 import InputGroup from 'react-bootstrap/InputGroup'
+import Tooltip from 'react-bootstrap/Tooltip'
 import { useEffect, useState, useRef } from 'react'
-import { uid } from '../pages'
+import { useRouter } from 'next/router'
+import { uid } from '../pages/game'
 import { socket } from '../constants'
 
 export default function UI({ players }) {
@@ -13,6 +16,9 @@ export default function UI({ players }) {
   const [msg, setMsg] = useState()
   const ref = useRef()
   const inputRef = useRef()
+  const codeBtn = useRef()
+  const [show, setShow] = useState(false)
+  const router = useRouter()
 
   function keyEvent(e) {
     if (e.key === "Control") {
@@ -62,9 +68,19 @@ export default function UI({ players }) {
     setMsg(e.target.value)
   }
 
+  function copyCode(e) {
+    setShow(true)
+    navigator.clipboard.writeText(router.query.id)
+    setTimeout(() => {
+      setShow(false)
+    }, 4000)
+  }
+
   useEffect(() => {
     ref?.current?.addEventListener('DOMNodeInserted', scrollEvent)
-    socket.on('chat', msg => setMessages([...messages, msg]))
+    socket.on('chat', msg => {
+      setMessages([...messages, msg])
+    })
     return () => {
       ref?.current?.removeEventListener("DOMNodeInserted", scrollEvent)
       socket.off('disconnected')
@@ -83,14 +99,14 @@ export default function UI({ players }) {
                 if (message.uid === uid) {
                   return (
                     <p key={index} className="myMsg rounded text-right p-0 m-0">
-                      <span className="yourName">{message.author}: </span>
+                      <span className="yourName">{message.author && message.author + ': '}</span>
                       <span className=""> {message.msg}</span>
                     </p>
                   )
                 }
                 return (
                   <p key={index} className="otherMsg p-0 m-0">
-                    <span className="otherName">{message.author}: </span>
+                    <span className="otherName">{message.author && message.author + ': '}</span>
                     <span className=""> {message.msg}</span>
                   </p>
                 )
@@ -101,11 +117,23 @@ export default function UI({ players }) {
         <Col className="">
           {players?.length < 2
             ? <p style={{color: 'white'}}>Lobby is empty</p>
-            : players?.length && players.map(p => (
-              <p key={p.uid} className="p-0 m-0" style={{lineHeight: 1.5, opacity: 1, color: `${p.turn ? 'red' : 'white'}`}}>{p.name}{p.deck.length > 0 && `: ${p.deck.length}`}</p>
+            : players?.length && players.map((p, index) => (
+              <p key={index} className="p-0 m-0" style={{lineHeight: 1.5, opacity: 1, color: `${p.turn ? 'red' : 'white'}`}}>{p.name ? p.name + ': ': ''}{p.deck?.length > 0 && `${p.deck.length}`}</p>
             ))
           }
-          {}
+          {expanded && 
+            <>
+              <Button ref={codeBtn} onClick={copyCode} variant="outline-primary" className="mb-2" style={{width: '10rem'}}>Copy Share Code</Button>
+              <Overlay target={codeBtn.current} show={show} placement="bottom">
+                {props => (
+                  <Tooltip id="overlay" {...props}>
+                    <h4>Share Code <strong>{router.query.id}</strong> copied to clipboard!</h4> 
+                  </Tooltip>
+                )}
+              </Overlay>
+              <Button onClick={() => router.replace('/')} variant="outline-danger" className="mb-2" style={{width: '10rem'}}>Return to Menu</Button>
+            </>
+          }
         </Col>
       </Row>
       {expanded && <Row className="">

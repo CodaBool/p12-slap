@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 const http = require('http').Server(app)
+const crypto = require("crypto")
 const io = require('socket.io')(http, {
   cors: { origin: '*' }
 })
@@ -42,21 +43,30 @@ io.on('connection', socket => {
     // console.log('join data', player)
     // data is a Player class here 
     // this will run anytime a client does a mount
+    console.log('JOIN: join', player)
     players[socket.id] = {...player, id: socket.id}
     // console.log('server player', players[socket.id])
     // console.log('complete player list', players)
-    console.log('lobby', socket.id, Object.keys(players).map(key => players[key].name))
+    console.log('JOIN: lobby', socket.id, Object.keys(players).map(key => players[key].name))
     // socket.broadcast.emit("join", data)
+
+    // TODO: does this go to all?
+    console.log('JOIN: send down', players)
     io.sockets.emit("join", players)
+    // socket.emit('resetAll')
+    // socket.broadcast.emit('resetAll')
   })
 
   socket.on("joined", () => {
     socket.emit("joined", players)
   })
 
-  socket.on('chat', data => {
-    // console.log('sending message:', data.msg)
-    socket.broadcast.emit('chat', data)
+  socket.on('chat', message => {
+    if (message.toSelf) {
+      socket.emit('chat', message)
+    } else {
+      socket.broadcast.emit('chat', message)
+    }
   })
 
   socket.on('sit', data => {
@@ -124,6 +134,21 @@ io.on('connection', socket => {
 
   socket.on('drop', data => {
     socket.broadcast.emit('dropAll', { card: data.key, burn: data.burn, secondBurn: data.secondBurn })
+  })
+
+  socket.on('create', name => {
+    // create player
+    const gid = crypto.randomBytes(3).toString('hex').toUpperCase()
+    console.log('creating new game with first player', { gid, name })
+    players[socket.id] = { gid, name, id: socket.id }
+
+    console.log('rooms pre', io.sockets.adapter.rooms)
+    // make players socket join the game room
+    socket.join(gid)
+    // send updated game to all sockets within game
+    io.to(gid).emit('create', gid)
+    console.log('rooms post', io.sockets.adapter.rooms)
+
   })
 
   socket.on('reset', () => {

@@ -3,7 +3,7 @@ import { TextGeometry } from "three-stdlib"
 import roboto from "./font-roboto.json"
 import { extend, useFrame } from "@react-three/fiber"
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
-import { useStore, uid } from '../../pages'
+import { useStore, uid } from '../../pages/game'
 import { debounce } from '../../constants'
 
 const font = new FontLoader().parse(roboto)

@@ -6,7 +6,8 @@
     "build": "next build && next export",
     "n": "nodemon ./server.js localhost 8080",
     "start": "node server.js",
-    "dev": "concurrently \"next dev\" \"nodemon ./server.js localhost 80\""
+    "dev": "concurrently \"next dev\" \"nodemon --exec go run main.go\"",
+    "client": "next dev"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.10.0",

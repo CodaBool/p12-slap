@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-export default function MyModal({name, setName}) {
+export default function MyModal({name, setName, show, setShow}) {
   const [nameError, setNameError] = useState('')
-  const [tempName, setTempName] = useState('')
-  const [show, setShow] = useState(false)
+  const ref = useRef()
 
   useEffect(() => {
     if (!localStorage.getItem('name')) {
@@ -16,19 +15,22 @@ export default function MyModal({name, setName}) {
     }
   }, [])
 
+  useEffect(() => {
+    if (show) ref?.current.focus()
+  }, [show])
+
   function handleName(e) {
     if (e.target.value.length > 11) {
       setNameError('Names must be max 12 characters')
     } else if (e.target.value.length == 0) {
       setNameError('Please Enter a Name')
-      setTempName('')
+      setName('')
     } else {
       setNameError(null)
       const char = e.target.value.slice(-1)
       if (char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' || char == ' ') {
-        console.log('set tempname to', e.target.value)
         localStorage.setItem('name', e.target.value)
-        setTempName(e.target.value)
+        setName(e.target.value)
       } else {
         setNameError('Only letter characters Allowed')
       }
@@ -36,24 +38,28 @@ export default function MyModal({name, setName}) {
   }
 
   function handleClose() {
-    console.log('got close event', tempName, '->', name)
-    if (name.length > 0) {
-      setName(tempName)
+    if (name?.length > 0) {
       setShow(false)
+    }
+  }
+
+  function checkForEnter(e) {
+    if (e.key == 'Enter') {
+      handleClose()
     }
   }
 
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header>
-        <Modal.Title>Enter a Name</Modal.Title>
+        <Modal.Title style={{color: 'black'}}>Enter a Name</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <p className="text-danger">{nameError}</p>
-        <Form.Control className="" value={tempName} placeholder="Name" onChange={handleName} />
+        <Form.Control className="" ref={ref} value={name ? name : ''} placeholder="Name" onChange={handleName} onKeyDown={checkForEnter} />
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="primary" className="w-100" disabled={tempName.length == 0} onClick={() => setShow(false)}>Play</Button>
+        <Button variant="success" className="w-100" disabled={name?.length == 0} onClick={handleClose}>Save</Button>
       </Modal.Footer>
     </Modal>
   )

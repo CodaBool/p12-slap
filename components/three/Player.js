@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react"
 import { useThree, useFrame } from "@react-three/fiber"
 import { useKeyboardControls } from "@react-three/drei"
 import { RigidBody, useRapier, CuboidCollider } from "@react-three/rapier"
-import { stack } from '../../pages'
+import { stack } from '../../pages/game'
 import { socket } from '../../constants'
 
 const SPEED = 5
