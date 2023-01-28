@@ -32,9 +32,14 @@ export const useStore = create(set => ({
   status: 'ready',
   countdown: false,
   locked: false,
+  messages: [],
   setLocked: locked => set(() => ({ locked })),
   setStatus: status => set(() => ({ status })),
   setCountdown: countdown => set(() => ({ countdown })),
+  setMessages: countdown => set(() => ({ countdown })),
+  addMessage: message => set(state => ({ 
+    messages: [...state.messages, message]
+  })),
 }))
 
 function Scene() {
@@ -70,6 +75,7 @@ export default function index() {
   const [stackState, setStackState] = useState()
   const setCountdown = useStore(state => state.setCountdown)
   const status = useStore(state => state.status)
+  const addMessage = useStore(state => state.addMessage)
   const setStatus = useStore(state => state.setStatus)
   const router = useRouter()
   
@@ -79,40 +85,31 @@ export default function index() {
   }
 
   useEffect(() => {
-    socket.on("join", ioPlayers => {
+    socket.on("joined", ioPlayers => {
       console.log('got a join new PLAYERS =', ioPlayers)
-      for (const [id, player] of Object.entries(ioPlayers)) {
-        console.log('uid', uid, 'vs', player.uid)
-        if (player.uid === uid) {
-          const me = players.find(p => p.uid == uid)
-          if (!me.id) {
-            me.id = id
-            console.log('updating my own socket id ->', id)
-            players = players.map(p => {
-              if (p.id == me.id) return me
-              return p
-            })
-          }
-        } else {
-          if (player.uid) {
-            // only add others who know a players uid
-            console.log('pushing other player of', player.name)
-            player.id = id
-            players.push(player)
-          } else {
-            console.log('skipping over', player.name)
-          }
-        }
-      }
-    })
-    
-    socket.on("joined", data => {
-      // console.log('JOINED:', data)
-      if (data) {
-        data.forEach((player, index) => {
-          // console.log('JOINED: looping new players', player)
-        })
-      }
+      // for (const [id, player] of Object.entries(ioPlayers)) {
+      //   console.log('uid', uid, 'vs', player.uid)
+      //   if (player.uid === uid) {
+      //     const me = players.find(p => p.uid == uid)
+      //     if (!me.id) {
+      //       me.id = id
+      //       console.log('updating my own socket id ->', id)
+      //       players = players.map(p => {
+      //         if (p.id == me.id) return me
+      //         return p
+      //       })
+      //     }
+      //   } else {
+      //     if (player.uid) {
+      //       // only add others who know a players uid 
+      //       console.log('pushing other player of', player.name)
+      //       player.id = id
+      //       players.push(player)
+      //     } else {
+      //       console.log('skipping over', player.name)
+      //     }
+      //   }
+      // }
     })
 
     socket.on("disconnected", ioPlayer => {
@@ -140,69 +137,44 @@ export default function index() {
       }
     })
 
-
-
     const playersWithMyUID = players.find(p => p.uid == uid)
     if (localStorage.getItem('name') && !playersWithMyUID?.length) {
       const me = new Player(localStorage.getItem('name'), uid)
-      console.log('CREATE: create', me, router.query.id, 'query', router.query)
       players.push(me)
-      console.log('sending to server create NAME', localStorage.getItem('name'))
       socket.emit('init', {name: localStorage.getItem('name'), uid})
     }
-
-    socket.on('init', data => {
-      console.log('init handshake', data)
-    })
     
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
     // useStore.subscribe( store => {} ) // don't know of a way this is useful yet
     return () => {
-      socket.off('init')
       socket.off('disconnected')
       socket.off('status')
       socket.off('joined')
-      socket.off('join')
       socket.off('deck-change')
     }
   }, [])
 
   useEffect(() => {
-    if (router.query.id) {
-      console.log('I noticed an id in the url =', router.query.id)
-      // console.log('sending to server join ID', router.query.id)
-      // const me = players.find(p => p.uid == uid)
-      // socket.emit('join', { gid: router.query.id, ...me })
+    const me = players.find(p => p.uid == uid)
+    if (router.query?.id) {
+      if (router.query?.id !== me?.id) {
+        socket.emit('join', { rkey: router.query.id, id: me.id })
+      }
     }
 
-    // const playersWithMyUID = players.find(p => p.uid == uid)
-    // if (localStorage.getItem('name') && !playersWithMyUID?.length) {
-    //   const me = new Player(localStorage.getItem('name'), uid)
-    //   console.log('CREATE: create', me, router.query.id, 'query', router.query)
-    //   players.push(me)
-    //   console.log('sending to server create NAME', localStorage.getItem('name'))
-    //   socket.emit('create', localStorage.getItem('name'))
-    // }
-
-    socket.on('init', data => {
-      // id
-      console.log('init handshake', data)
-      // console.log('finished creating game ID =', gid)
-      // gameID = gid
-      // router.replace({ pathname: '/game', query: { id: gid } })
-      // const message = {
-      //   author: null,
-      //   msg: 'Press "Ctrl" to open this panel & "Esc" to unlock mouse',
-      //   uid,
-      //   toSelf: true
-      // }
-      // socket.emit('chat', message)
+    socket.on('init', id => {
+      // router.replace({ pathname: '/game', query: { id } })       
+      me.id = id
+      addMessage({
+        author: null,
+        body: 'Press "Ctrl" to open this panel & "Esc" to unlock mouse',
+        uid
+      })
     })
 
     return () => {
       socket.off('init')
     }
-
   }, [router])
 
   useEffect(() => {

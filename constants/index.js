@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 const domain = process.env.NEXT_PUBLIC_SOCKET_DOMAIN || 'http://p12.codabool.com'
 export const socket = io.connect(domain, {transports: ['websocket']})
 export const randomName = (Math.random() + 1).toString(36).substring(7)
-
+export const ROOM_CHAR_SIZE = 6
 // split an array into even numbers
 export const breakIntoParts = (num, parts) => 
         [...Array(parts)].map((_,i) => 

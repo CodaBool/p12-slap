@@ -8,7 +8,7 @@ import Col from 'react-bootstrap/Col'
 import { useRouter } from 'next/router'
 import Modal from '../components/Modal'
 import Background from '../components/Background'
-import { socket } from '../constants'
+import { socket, ROOM_CHAR_SIZE } from '../constants'
 import useScreen from '../constants/useScreen'
 
 export const uid = Math.random().toString(16).slice(2)
@@ -54,8 +54,8 @@ export default function index() {
   }
 
   function handleCode(e) {
-    if (e.target.value.length > 6) {
-      setError('Codes must be 6 characters long')
+    if (e.target.value.length > ROOM_CHAR_SIZE) {
+      setError(`Codes must be ${ROOM_CHAR_SIZE} characters long`)
     } else {
       setError(null)
     }
@@ -66,12 +66,12 @@ export default function index() {
     <Popover>
       <Popover.Header as="h3" className="text-center" style={{color: 'black'}}>Join or Create</Popover.Header>
       <Popover.Body style={{fontSize: '1.5em'}}>
-        &emsp;<strong>Join</strong> a room which someone has already created and provided you a 6 character code for to join
-        <Form.Control className="my-3" value={id} placeholder="6 Character Code" onChange={handleCode} />
+        &emsp;<strong>Join</strong> a room which someone has already created and provided you a {ROOM_CHAR_SIZE} character code for to join
+        <Form.Control className="my-3" value={id} placeholder={`${ROOM_CHAR_SIZE} Character Code`} onChange={handleCode} />
         {error && <p className="text-danger text-center">{error}</p>}
-        <Button onClick={joinGame} className="w-100 my-1" disabled={id?.length !== 6 || error || name?.length == 0}>Join with Code</Button>
+        <Button onClick={joinGame} className="w-100 my-1" disabled={id?.length !== ROOM_CHAR_SIZE || error || name?.length == 0}>Join with Code</Button>
         <hr />
-        &emsp;<strong>Create</strong> a new room which generates a 6 character code for you to provide to another player to join
+        &emsp;<strong>Create</strong> a new room which generates a {ROOM_CHAR_SIZE} character code for you to provide to another player to join
         <Button onClick={createGame} disabled={error || name?.length == 0} className="w-100 mt-3">Create New Room</Button>
       </Popover.Body>
     </Popover>

@@ -7,18 +7,20 @@ import InputGroup from 'react-bootstrap/InputGroup'
 import Tooltip from 'react-bootstrap/Tooltip'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
+import { useStore } from '../pages/game'
 import { uid } from '../pages/game'
 import { socket } from '../constants'
 
 export default function UI({ players }) {
   const [expanded, setExpanded] = useState(false)
-  const [messages, setMessages] = useState([])
   const [msg, setMsg] = useState()
   const ref = useRef()
   const inputRef = useRef()
   const codeBtn = useRef()
   const [show, setShow] = useState(false)
   const router = useRouter()
+  const messages = useStore(state => state.messages)
+  const addMessage = useStore(state => state.addMessage)
 
   function keyEvent(e) {
     if (e.key === "Control") {
@@ -32,13 +34,13 @@ export default function UI({ players }) {
   function sendMessage(e) {
     if (e) e.preventDefault()
     if (!msg) return
-    const message = {
+    const msgObj = {
       author: localStorage.getItem('name'),
-      msg,
+      body: msg,
       uid
     }
-    setMessages([...messages, message])
-    socket.emit('chat', message)
+    addMessage(msgObj)
+    socket.emit('chat', msgObj)
     setMsg('')
   }
 
@@ -79,7 +81,7 @@ export default function UI({ players }) {
   useEffect(() => {
     ref?.current?.addEventListener('DOMNodeInserted', scrollEvent)
     socket.on('chat', msg => {
-      setMessages([...messages, msg])
+      addMessage(msg)
     })
     return () => {
       ref?.current?.removeEventListener("DOMNodeInserted", scrollEvent)
@@ -100,14 +102,14 @@ export default function UI({ players }) {
                   return (
                     <p key={index} className="myMsg rounded text-right p-0 m-0">
                       <span className="yourName">{message.author && message.author + ': '}</span>
-                      <span className=""> {message.msg}</span>
+                      <span className=""> {message.body}</span>
                     </p>
                   )
                 }
                 return (
                   <p key={index} className="otherMsg p-0 m-0">
                     <span className="otherName">{message.author && message.author + ': '}</span>
-                    <span className=""> {message.msg}</span>
+                    <span className=""> {message.body}</span>
                   </p>
                 )
               })

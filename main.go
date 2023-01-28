@@ -11,11 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/uuid"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	debugger "github.com/zishang520/engine.io/log"
 	"github.com/zishang520/engine.io/types"
 	server "github.com/zishang520/socket.io/socket"
 
@@ -37,12 +35,20 @@ import (
 // 	Rooms: types.NewSet[socket.Room]("/"),
 // }))
 
+// TODO: should look into using server.Room instead of string for key values
+
 type Player struct {
 	Name string   `json:"name"`
 	Turn bool     `json:"turn"`
 	Id   string   `json:"id"`
 	Uid  string   `json:"uid"`
 	Deck []string `json:"deck"`
+}
+
+type Message struct {
+	Author string `json:"author"`
+	Uid    string `json:"uid"`
+	Body   string `json:"body"`
 }
 
 func check(err error) {
@@ -53,6 +59,22 @@ func check(err error) {
 
 func typeof(v interface{}) string {
 	return fmt.Sprintf("%T", v)
+}
+
+func firstN(s string, n int) string {
+	i := 0
+	for j := range s {
+		if i == n {
+			return s[:j]
+		}
+		i++
+	}
+	return s
+}
+
+func removeIndex(s []string, i int) []string {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 func debugLogger() {
@@ -95,7 +117,30 @@ func printRooms(io *server.Server) {
 	log.Info().Strs("Rooms", s).Send()
 }
 
-func debug(io *server.Server) {
+func inRoom(io *server.Server, room string) (s []string) {
+	clients := io.Sockets().Adapter().FetchSockets(&server.BroadcastOptions{
+		Rooms: types.NewSet[server.Room](server.Room(room)),
+	})
+	for _, client := range clients {
+		if cl, ok := client.(*server.Socket); ok {
+			s = append(s, string(cl.Id()))
+		}
+	}
+	return s
+}
+
+func playersInRoom(io *server.Server, room string, players map[string]Player) (pSlice []Player) {
+	idSlice := inRoom(io, room)
+	for _, id := range idSlice {
+		if player, ok := players[id]; ok {
+			pSlice = append(pSlice, player)
+		}
+	}
+	return pSlice
+}
+
+// TODO: this probably could be improved with the new foudn FetchSockets logic used in playersInRoom
+func debug(io *server.Server, p map[string]Player) {
 	rooms := make(map[server.Room]bool)
 	printUpdate := false
 	var count int = 0
@@ -125,8 +170,9 @@ func debug(io *server.Server) {
 			// log.Print("  rooms ", len(rooms), " -> ", count)
 			for r := range rooms {
 				value, _ := io.Sockets().Adapter().Rooms().Load(r)
+				// log.Print("  checking if room ", r, " is in rooms, got value of '", value, "' for that key")
 				if value == nil {
-					// log.Print("  The room ", r, " is not present and is being deleted")
+					// log.Print("  The room ", r, " is not present for the socket and is being deleted")
 					delete(rooms, r)
 				}
 			}
@@ -136,9 +182,11 @@ func debug(io *server.Server) {
 		if printUpdate {
 			keyAppends := make([]string, 0)
 			for r := range rooms {
-				keyAppends = append(keyAppends, fmt.Sprintf("%v", r))
+				// keyAppends = append(keyAppends, fmt.Sprintf("%v", r))
+				// truncate id
+				keyAppends = append(keyAppends, string(r))
 			}
-			log.Print("Connected: ", connected, " | Rooms: ", keyAppends)
+			log.Print("Connected: ", connected, " | Players: ", len(p), " | Rooms: ", keyAppends)
 			printUpdate = false
 		}
 	}
@@ -158,11 +206,12 @@ func print(title string, input any) {
 	log.Info().Msg(fmt.Sprintf("%s: %v", title, string(output)))
 }
 
-func FillStruct(m map[string]interface{}, s interface{}) error {
+// alternative implementation
+// https://stackoverflow.com/a/59568072/15428240
+func fillStruct(m map[string]interface{}, s interface{}) error {
 	structValue := reflect.ValueOf(s).Elem()
 
 	for name, value := range m {
-		// structFieldValue := structValue.FieldByName(cases.Title(language.Und))
 		structFieldValue := structValue.FieldByName(cases.Title(language.Und).String(name))
 
 		if !structFieldValue.IsValid() {
@@ -173,10 +222,27 @@ func FillStruct(m map[string]interface{}, s interface{}) error {
 			return fmt.Errorf("Cannot set %s field value", name)
 		}
 
+		// TODO: handle nil values better
+		if value == nil {
+			if structFieldValue.Type().Name() == "string" {
+				structFieldValue.Set(reflect.ValueOf(""))
+			}
+			continue
+		}
+
 		val := reflect.ValueOf(value)
 		if structFieldValue.Type() != val.Type() {
+			// TODO: this is another bandaid on a horrible solution.
+			// there should be a better way to map variables into struct
+			if fmt.Sprintf("%v", structFieldValue.Type()) == "[]string" {
+				// log.Print("arrays ", name, ": ", value, " | ", val, " | ", structFieldValue.Type().Name(), " | ", structFieldValue.Type())
+				var emptySlice []string // does not allocate 😎
+				structFieldValue.Set(reflect.ValueOf(emptySlice))
+				continue
+			}
 			return errors.New("Provided value type didn't match obj field type")
 		}
+		// log.Print(name, ": ", value, " | ", val)
 
 		structFieldValue.Set(val)
 	}
@@ -193,62 +259,159 @@ func printArr(title string, input ...any) {
 
 func parsePlayer(input []any) (player Player) {
 	if value, ok := input[0].(map[string]interface{}); ok {
+		// pointer
 		result := &Player{}
-		err := FillStruct(value, result)
+		err := fillStruct(value, result)
 		check(err)
-		return *result
+		return Player{
+			Name: result.Name,
+			Turn: result.Turn,
+			Id:   result.Id,
+			Uid:  result.Uid,
+			Deck: result.Deck,
+		}
 	}
 	return player
 }
 
-// needs to be capital first letter for JSON print to show it 🤷
+func parseMessage(input []any) (message Message) {
+	if value, ok := input[0].(map[string]interface{}); ok {
+		// pointer
+		result := &Message{}
+		err := fillStruct(value, result)
+		check(err)
+		return Message{
+			Author: result.Author,
+			Uid:    result.Uid,
+			Body:   result.Body,
+		}
+	}
+	return message
+}
+
+func rmNonAlphaNum(s string) string {
+	var result strings.Builder
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if ('a' <= b && b <= 'z') ||
+			('A' <= b && b <= 'Z') ||
+			('0' <= b && b <= '9') ||
+			b == ' ' {
+			result.WriteByte(b)
+		}
+	}
+	return result.String()
+}
+
+// 36 ^ 6 = 2,176,782,336
+// 1 in 2,176,782,336 odds of duplicate room
+var ROOM_CHAR_SIZE int = 6
 
 func main() {
 	// allocate 100 initial players in memory
-	m := make(map[string]Player, 100)
+	players := make(map[string]Player, 100)
+	// this would be a better as a set of a set
+	// roomRegistry := make(map[string][]string, 100)
 
 	httpServer := types.CreateServer(nil)
 	config := server.DefaultServerOptions()
 	config.SetCors(&types.Cors{Origin: "*"})
 	io := server.NewServer(httpServer, config)
 
-	// debug
-	debugger.DEBUG = true
 	debugLogger()
-	go debug(io)
+	go debug(io, players)
+
+	// USEFUL
 	// types.NewStringBufferString("xxx")
+	// "github.com/google/uuid"
+	// id := uuid.New()
+	// can get ip of the client from handshake.address
+	// Nested objs
+	// if m, ok := data[0].(map[string]any); ok {
+	// 	if m2, ok := m["player"].([]any); ok {
+	// 		print("player", parsePlayer(m2))
+	// 		log.Print("wants to join room ", m["rkey"])
+	// 		if
+	// 	}
+	// }
 
 	io.On("connection", func(clients ...any) {
 		// client methods
 		// https://github.com/zishang520/socket.io/blob/main/socket/socket.go#L45
 		socket := clients[0].(*server.Socket)
-		log.Info().Str("ID", string(socket.Id())).Msg("+")
+		id := string(socket.Id())
+		rkey := firstN(strings.ToUpper(rmNonAlphaNum(id)), ROOM_CHAR_SIZE)
 
 		socket.On("init", func(data ...any) {
-			player := parsePlayer(data)
-			// print("Id", socket.Id())
-			// socket.To(server.Room(socket.Id())).Emit("init", socket.Id())
-			// socket.Leave(server.Room(socket.Id()))
-			// socket.Join("baby")
-			// log.Print("left ", socket.Id(), " & joined baby")
-
-			m[string(socket.Id())] = player
-
-			print("m", m)
-			printRooms(io)
+			players[id] = parsePlayer(data)
+			log.Info().Str("Room", rkey).Str("Name", players[id].Name).Msg("👋")
+			socket.Leave(server.Room(id))
+			socket.Join(server.Room(rkey))
+			io.Sockets().To(server.Room(rkey)).Emit("init", rkey)
 		})
 
 		socket.On("run", func(...any) {
-			id := uuid.New()
-			log.Print("i have to use this somewhere", m, id)
-			// socket.Join("baby")
-			// socket.To("baby").Emit("wow")
-			// socket.Leave("baby")
+		})
+
+		socket.On("chat", func(msg ...any) {
+			// io.Sockets().To(server.Room(id)).Emit("chat", message)
+
+			// message := parseMessage(msg)
+
+			// TODO: find a way to broadcast
+			// io.Adapter().Broadcast(&server.BroadcastOptions{
+			// 	Rooms: types.NewSet[server.Room](server.Room(id)),
+			// })
+			// .Emit("chat", message)
+			// socket.broadcast.emit('chat', message)
+		})
+
+		socket.On("join", func(data ...any) {
+			if m, ok := data[0].(map[string]any); ok {
+
+				if m["id"] == nil {
+					// if m["id"] is nil at this point the client has failed the init process
+					// TODO: they are connected on the socket but failed to join, so an error should
+					// be sent down to client here
+					log.Error().Msg("Failed init")
+				}
+
+				if m["rkey"] != rkey && m["id"] != nil {
+					if room, ok := m["rkey"].(string); ok {
+						log.Info().Str("Room", fmt.Sprintf("%s ➡️  %s", m["id"], room)).Str("Name", players[id].Name).Msg("✈️ ")
+
+						socket.Leave(server.Room(rkey))
+
+						socket.Join(server.Room(room))
+
+						if player, ok := players[id]; ok {
+							player.Id = room
+							players[id] = player
+						}
+
+						// To goes to all clients
+						pSlice := playersInRoom(io, room, players)
+						io.Sockets().To(server.Room(room)).Emit("joined", pSlice)
+
+						// io.Adapter().Broadcast(&server.BroadcastOptions{
+						// 	Rooms: types.NewSet[server.Room](server.Room(id)),
+						// })
+						// .Emit("chat", message)
+						// socket.broadcast.emit('chat', message)
+
+					}
+				}
+			}
 		})
 
 		socket.On("disconnect", func(...any) {
-			// print("player", m[id.String()])
-			log.Info().Str("ID", string(socket.Id())).Msg("-")
+			// debug
+			if player, ok := players[id]; ok {
+				log.Info().Str("Room", rkey).Str("Name", player.Name).Msg("🚪")
+
+			}
+
+			delete(players, id)
 		})
 	})
 
