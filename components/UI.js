@@ -81,11 +81,12 @@ export default function UI({ players }) {
   useEffect(() => {
     ref?.current?.addEventListener('DOMNodeInserted', scrollEvent)
     socket.on('chat', msg => {
-      addMessage(msg)
+      console.log('got chat from server', msg)
+      // addMessage(msg)
     })
     return () => {
       ref?.current?.removeEventListener("DOMNodeInserted", scrollEvent)
-      socket.off('disconnected')
+      socket.off('chat')
     }
   }, [messages])
 

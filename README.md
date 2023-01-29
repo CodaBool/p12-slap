@@ -40,6 +40,8 @@ however, it is out of date, you can check the date on it [here](https://github.c
 
 compared to the newer decoder [here](https://github.com/zeux/meshoptimizer/blob/master/js/meshopt_decoder.js)
 
+# Other
+- empty namespaces will timeout after 45s
 
 # Go Migration notes
 ## Efficiency

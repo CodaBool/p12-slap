@@ -139,7 +139,7 @@ func playersInRoom(io *server.Server, room string, players map[string]Player) (p
 	return pSlice
 }
 
-// TODO: this probably could be improved with the new foudn FetchSockets logic used in playersInRoom
+// TODO: this probably could be improved with the new foudn FetchSockets logic used in inRoom
 func debug(io *server.Server, p map[string]Player) {
 	rooms := make(map[server.Room]bool)
 	printUpdate := false
@@ -208,6 +208,7 @@ func print(title string, input any) {
 
 // alternative implementation
 // https://stackoverflow.com/a/59568072/15428240
+// TODO: reflex is slow look for better
 func fillStruct(m map[string]interface{}, s interface{}) error {
 	structValue := reflect.ValueOf(s).Elem()
 
@@ -305,7 +306,7 @@ func rmNonAlphaNum(s string) string {
 
 // 36 ^ 6 = 2,176,782,336
 // 1 in 2,176,782,336 odds of duplicate room
-var ROOM_CHAR_SIZE int = 6
+const ROOM_CHAR_SIZE int = 6
 
 func main() {
 	// allocate 100 initial players in memory
@@ -344,8 +345,9 @@ func main() {
 
 		socket.On("init", func(data ...any) {
 			players[id] = parsePlayer(data)
-			log.Info().Str("Room", rkey).Str("Name", players[id].Name).Msg("👋")
-			socket.Leave(server.Room(id))
+			log.Info().Str("Room", id).Str("Name", players[id].Name).Msg("👋")
+			// TODO: find out how to remove old room
+			// socket.Leave(server.Room(id))
 			socket.Join(server.Room(rkey))
 			io.Sockets().To(server.Room(rkey)).Emit("init", rkey)
 		})
@@ -354,16 +356,8 @@ func main() {
 		})
 
 		socket.On("chat", func(msg ...any) {
-			// io.Sockets().To(server.Room(id)).Emit("chat", message)
-
-			// message := parseMessage(msg)
-
-			// TODO: find a way to broadcast
-			// io.Adapter().Broadcast(&server.BroadcastOptions{
-			// 	Rooms: types.NewSet[server.Room](server.Room(id)),
-			// })
-			// .Emit("chat", message)
-			// socket.broadcast.emit('chat', message)
+			message := parseMessage(msg)
+			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
 
 		socket.On("join", func(data ...any) {
@@ -380,9 +374,10 @@ func main() {
 					if room, ok := m["rkey"].(string); ok {
 						log.Info().Str("Room", fmt.Sprintf("%s ➡️  %s", m["id"], room)).Str("Name", players[id].Name).Msg("✈️ ")
 
-						socket.Leave(server.Room(rkey))
+						// socket.Leave(server.Room(rkey))
 
 						socket.Join(server.Room(room))
+						rkey = room
 
 						if player, ok := players[id]; ok {
 							player.Id = room
@@ -391,14 +386,8 @@ func main() {
 
 						// To goes to all clients
 						pSlice := playersInRoom(io, room, players)
-						io.Sockets().To(server.Room(room)).Emit("joined", pSlice)
 
-						// io.Adapter().Broadcast(&server.BroadcastOptions{
-						// 	Rooms: types.NewSet[server.Room](server.Room(id)),
-						// })
-						// .Emit("chat", message)
-						// socket.broadcast.emit('chat', message)
-
+						socket.To(server.Room(room)).Emit("joined", pSlice)
 					}
 				}
 			}
@@ -408,7 +397,6 @@ func main() {
 			// debug
 			if player, ok := players[id]; ok {
 				log.Info().Str("Room", rkey).Str("Name", player.Name).Msg("🚪")
-
 			}
 
 			delete(players, id)
