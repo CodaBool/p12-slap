@@ -162,9 +162,14 @@ export default function index() {
       }
     }
 
-    socket.on('init', id => {
-      // router.replace({ pathname: '/game', query: { id } })       
-      me.id = id
+    socket.on('init', data => {
+
+      console.log('data', data[0])
+      // router.replace({ pathname: '/game', query: { id } })
+      me.id = data[0]
+      // console.log('set id', me.id)
+      // console.log('players', players)
+      socket.emit('unsub', data[1])
       addMessage({
         author: null,
         body: 'Press "Ctrl" to open this panel & "Esc" to unlock mouse',
@@ -178,6 +183,7 @@ export default function index() {
   }, [router])
 
   useEffect(() => {
+    console.log('update', playersState)
     const inter = setInterval(() => {
       try {
         assert.deepEqual(players, playersState)

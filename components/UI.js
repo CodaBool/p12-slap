@@ -8,7 +8,7 @@ import Tooltip from 'react-bootstrap/Tooltip'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useStore } from '../pages/game'
-import { uid } from '../pages/game'
+import { uid } from '../pages'
 import { socket } from '../constants'
 
 export default function UI({ players }) {
@@ -18,6 +18,7 @@ export default function UI({ players }) {
   const inputRef = useRef()
   const codeBtn = useRef()
   const [show, setShow] = useState(false)
+  const [showErr, setShowErr] = useState(false)
   const router = useRouter()
   const messages = useStore(state => state.messages)
   const addMessage = useStore(state => state.addMessage)
@@ -71,11 +72,25 @@ export default function UI({ players }) {
   }
 
   function copyCode(e) {
-    setShow(true)
-    navigator.clipboard.writeText(router.query.id)
-    setTimeout(() => {
-      setShow(false)
-    }, 4000)
+    const me = players.find(p => p.uid == uid)
+    if (router?.query?.id) {
+      setShow(true)
+      navigator.clipboard.writeText(router?.query?.id)
+      setTimeout(() => {
+        setShow(false)
+      }, 4000)
+    } else if (me?.id) {
+      setShow(true)
+      navigator.clipboard.writeText(me?.id)
+      setTimeout(() => {
+        setShow(false)
+      }, 4000)
+    } else {
+      setShowErr(true)
+      setTimeout(() => {
+        setShowErr(false)
+      }, 4000)
+    }
   }
 
   useEffect(() => {
@@ -130,7 +145,14 @@ export default function UI({ players }) {
               <Overlay target={codeBtn.current} show={show} placement="bottom">
                 {props => (
                   <Tooltip id="overlay" {...props}>
-                    <h4>Share Code <strong>{router.query.id}</strong> copied to clipboard!</h4> 
+                    <h4>Share Code <strong>{router.query.id ? router.query.id : players.find(p => p.uid == uid)[0]?.id}</strong> copied to clipboard!</h4> 
+                  </Tooltip>
+                )}
+              </Overlay>
+              <Overlay target={codeBtn.current} show={showErr} placement="bottom">
+                {props => (
+                  <Tooltip id="overlay" {...props}>
+                    <h4>Failed to initialize, no share ID was found.</h4> 
                   </Tooltip>
                 )}
               </Overlay>

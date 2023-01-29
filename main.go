@@ -107,19 +107,54 @@ func debugLogger() {
 	// fmt.Println(ASCII_ART)
 }
 
-func printRooms(io *server.Server) {
+func printRooms(io *server.Server, printPlayers bool, players map[string]Player) {
 	s := make([]string, 0)
 	io.Sockets().Adapter().Rooms().Range(func(key, value interface{}) bool {
 		s = append(s, fmt.Sprintf("%v", key))
 		// sync.Map can return false to interupt iteration
 		return true
 	})
-	log.Info().Strs("Rooms", s).Send()
+	if printPlayers {
+		output := make([]string, 0)
+		for _, rkey := range s {
+			if len(rkey) == ROOM_CHAR_SIZE {
+				slice := inRoom(io, rkey)
+				names := make([]string, 1)
+				names[0] = rkey + ": "
+				for _, id := range slice {
+					names = append(names, players[id].Name)
+				}
+				// only get rooms with players in it
+				if len(names) > 1 {
+					output = append(output, strings.Join(names, " "))
+				}
+			}
+		}
+		log.Info().Strs("All", output).Send()
+	} else {
+		log.Info().Strs("Rooms", s).Send()
+	}
+}
+
+func activeRooms(io *server.Server) (s []string) {
+	// alternative solution would be to look at the length of the rkey and simply print short ones
+	io.Sockets().Adapter().Rooms().Range(func(key, value interface{}) bool {
+		if rkey, ok := key.(server.Room); ok {
+			clients := io.Sockets().Adapter().FetchSockets(&server.BroadcastOptions{
+				Rooms: types.NewSet(rkey),
+			})
+			if len(clients) > 1 {
+				s = append(s, string(rkey))
+			}
+		}
+		return true
+	})
+	return s
 }
 
 func inRoom(io *server.Server, room string) (s []string) {
 	clients := io.Sockets().Adapter().FetchSockets(&server.BroadcastOptions{
-		Rooms: types.NewSet[server.Room](server.Room(room)),
+		Rooms: types.NewSet(server.Room(room)),
 	})
 	for _, client := range clients {
 		if cl, ok := client.(*server.Socket); ok {
@@ -184,7 +219,9 @@ func debug(io *server.Server, p map[string]Player) {
 			for r := range rooms {
 				// keyAppends = append(keyAppends, fmt.Sprintf("%v", r))
 				// truncate id
-				keyAppends = append(keyAppends, string(r))
+				if len(string(r)) == ROOM_CHAR_SIZE {
+					keyAppends = append(keyAppends, string(r))
+				}
 			}
 			log.Print("Connected: ", connected, " | Players: ", len(p), " | Rooms: ", keyAppends)
 			printUpdate = false
@@ -345,11 +382,12 @@ func main() {
 
 		socket.On("init", func(data ...any) {
 			players[id] = parsePlayer(data)
-			log.Info().Str("Room", id).Str("Name", players[id].Name).Msg("👋")
-			// TODO: find out how to remove old room
+			// TODO: for some reason leaving your original room breaks broadcasts
 			// socket.Leave(server.Room(id))
 			socket.Join(server.Room(rkey))
-			io.Sockets().To(server.Room(rkey)).Emit("init", rkey)
+
+			io.Sockets().To(server.Room(rkey)).Emit("init", [2]string{rkey, id})
+			log.Info().Str("Name", players[id].Name).Msg("👋") // .Str("Room", rkey)
 		})
 
 		socket.On("run", func(...any) {
@@ -372,11 +410,15 @@ func main() {
 
 				if m["rkey"] != rkey && m["id"] != nil {
 					if room, ok := m["rkey"].(string); ok {
-						log.Info().Str("Room", fmt.Sprintf("%s ➡️  %s", m["id"], room)).Str("Name", players[id].Name).Msg("✈️ ")
 
+						// previous room is m["id"]
+						log.Info().Str("Joining", room).Str("Name", players[id].Name).Msg("✈️ ")
+
+						// TODO: find a way to remove old room
 						// socket.Leave(server.Room(rkey))
-
 						socket.Join(server.Room(room))
+						socket.Leave(server.Room(rkey))
+						// io.To(server.Room(rkey)).SocketsLeave(server.Room(rkey))
 						rkey = room
 
 						if player, ok := players[id]; ok {
@@ -384,9 +426,7 @@ func main() {
 							players[id] = player
 						}
 
-						// To goes to all clients
 						pSlice := playersInRoom(io, room, players)
-
 						socket.To(server.Room(room)).Emit("joined", pSlice)
 					}
 				}
@@ -396,9 +436,8 @@ func main() {
 		socket.On("disconnect", func(...any) {
 			// debug
 			if player, ok := players[id]; ok {
-				log.Info().Str("Room", rkey).Str("Name", player.Name).Msg("🚪")
+				log.Info().Str("Room", rkey).Str("ID", string(socket.Id())).Str("Name", player.Name).Msg("🚪")
 			}
-
 			delete(players, id)
 		})
 	})
