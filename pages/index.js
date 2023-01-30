@@ -5,20 +5,24 @@ import Popover from 'react-bootstrap/Popover'
 import Form from 'react-bootstrap/Form'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
+import Spinner from 'react-bootstrap/Spinner'
 import { useRouter } from 'next/router'
 import Modal from '../components/Modal'
 import Background from '../components/Background'
-import { socket, ROOM_CHAR_SIZE } from '../constants'
+import { socket, ROOM_CHAR_SIZE, Player } from '../constants'
 import useScreen from '../constants/useScreen'
+import { players } from './game'
 
 export const uid = Math.random().toString(16).slice(2)
 
 export default function index() {
   const [name, setName] = useState()
-  const [id, setID] = useState('')
+  const [rkey, setRkey] = useState('')
   const [wins, setWins] = useState()
   const [error, setError] = useState()
   const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showBtn, setShowBtn] = useState(true)
   const router = useRouter()
   let screen = useScreen()
 
@@ -31,26 +35,48 @@ export default function index() {
     } else {
       setName(localStorage.getItem('name'))
     }
-  }, [])
-
-  useEffect(() => {
-    // Prefetch the game page
-    router.prefetch('/game')
-  }, [])
-
-  function createGame() {
-    if (name && localStorage.getItem('name')) {
-      router.push('/game')
-    }
-  }
-
-  function joinGame() {
-    if (name && localStorage.getItem('name') && id) {
+    // TODO: find out if this is too expensive
+    // router?.prefetch('/game')
+    socket.on("init", id => {
+      if (!players.length) {
+        const me = new Player(localStorage.getItem('name'), uid, id)
+        players.push(me)
+        setLoading(true)
+        // TODO: should do this based on btn event click
+        if (rkey?.length === ROOM_CHAR_SIZE) {
+          console.log('emit join')
+          socket.emit('join', { rkey, id: me.id })
+        } else {
+          router.push({
+            pathname: '/game',
+            query: { id }
+          })
+        }
+      }
+    })
+    socket.on("join", ioPlayers => {
+      console.log('sync players', players)
+      for (const [id, player] of Object.entries(ioPlayers)) {
+        if (player.uid !== uid) {
+          console.log('adding', player.name)
+          players.push(player)
+        }
+      }
+      console.log('synced players', players)
       router.push({
         pathname: '/game',
-        query: { id }
+        query: { id: rkey }
       })
+    })
+    return () => {
+      socket.off("init")
+      socket.off("join")
     }
+  }, [rkey])
+
+  function initialize() {
+    setShowBtn(false)
+    socket.emit('init', {name: localStorage.getItem('name'), uid})
   }
 
   function handleCode(e) {
@@ -59,20 +85,27 @@ export default function index() {
     } else {
       setError(null)
     }
-    setID(e.target.value)
+    setRkey(e.target.value)
   }
 
   const popover = (
     <Popover>
       <Popover.Header as="h3" className="text-center" style={{color: 'black'}}>Join or Create</Popover.Header>
       <Popover.Body style={{fontSize: '1.5em'}}>
-        &emsp;<strong>Join</strong> a room which someone has already created and provided you a {ROOM_CHAR_SIZE} character code for to join
-        <Form.Control className="my-3" value={id} placeholder={`${ROOM_CHAR_SIZE} Character Code`} onChange={handleCode} />
-        {error && <p className="text-danger text-center">{error}</p>}
-        <Button onClick={joinGame} className="w-100 my-1" disabled={id?.length !== ROOM_CHAR_SIZE || error || name?.length == 0}>Join with Code</Button>
-        <hr />
-        &emsp;<strong>Create</strong> a new room which generates a {ROOM_CHAR_SIZE} character code for you to provide to another player to join
-        <Button onClick={createGame} disabled={error || name?.length == 0} className="w-100 mt-3">Create New Room</Button>
+        { showBtn && 
+          <>
+            &emsp;<strong>Join</strong> a room which someone has already created and provided you a {ROOM_CHAR_SIZE} character code for to join
+            <Form.Control className="my-3" value={rkey} placeholder={`${ROOM_CHAR_SIZE} Character Code`} onChange={handleCode} />
+            {error && <p className="text-danger text-center">{error}</p>}
+            <Button onClick={initialize} className="w-100 my-1" disabled={rkey?.length !== ROOM_CHAR_SIZE || error || name?.length == 0}>Join with Code</Button>
+            <hr />
+            &emsp;<strong>Create</strong> a new room which generates a {ROOM_CHAR_SIZE} character code for you to provide to another player to join
+            <Button onClick={initialize} disabled={error || name?.length == 0} className="w-100 mt-3">Create New Room</Button>
+          </>
+        }
+        {
+          !showBtn && (loading ? <h1>Loading <Spinner animation="border" variant="info"/></h1> : <h1>Joining Game 😎</h1>)
+        }
       </Popover.Body>
     </Popover>
   )
@@ -99,6 +132,5 @@ export default function index() {
         <Modal name={name} setName={setName} show={show} setShow={setShow} />
       </div>
     </>
-
   )
 }

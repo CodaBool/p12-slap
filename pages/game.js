@@ -3,7 +3,6 @@ import { RenderPixelatedPass } from 'three-stdlib'
 import { useMemo, useEffect, Suspense, useState, useCallback, useReducer } from 'react'
 import * as THREE from 'three'
 import { socket, breakIntoParts, shuffleArr, copy } from '../constants'
-import { Player } from '../constants/class'
 // import Cube from '../components/three/Cube'
 import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
@@ -32,7 +31,11 @@ export const useStore = create(set => ({
   status: 'ready',
   countdown: false,
   locked: false,
-  messages: [],
+  messages: [{
+    author: null,
+    body: 'Press "Ctrl" to open this panel & "Esc" to unlock mouse',
+    uid: null
+  }],
   setLocked: locked => set(() => ({ locked })),
   setStatus: status => set(() => ({ status })),
   setCountdown: countdown => set(() => ({ countdown })),
@@ -85,30 +88,37 @@ export default function index() {
   }
 
   useEffect(() => {
-    socket.on("joined", ioPlayers => {
-      console.log('got a join new PLAYERS =', ioPlayers)
+    // socket.on("joined", ioPlayers => {
+    //   console.log('got a join new PLAYERS =', ioPlayers)
+    //   for (const [id, player] of Object.entries(ioPlayers)) {
+    //     console.log('uid', uid, 'vs', player.uid)
+    //     if (player.uid === uid) {
+    //       const me = players.find(p => p.uid == uid)
+    //       if (!me.id) {
+    //         me.id = id
+    //         console.log('updating my own socket id ->', id)
+    //         players = players.map(p => {
+    //           if (p.id == me.id) return me
+    //           return p
+    //         })
+    //       }
+    //     } else {
+          // if (player.uid) {
+          //   // only add others who know a players uid 
+          //   console.log('pushing other player of', player.name)
+          //   player.id = id
+          //   players.push(player)
+          // } else {
+          //   console.log('skipping over', player.name)
+          // }
+    //     }
+    //   }
+    // })
+    socket.on("join", ioPlayers => {
+      // console.log('got a join new PLAYERS =', ioPlayers)
+      players = ioPlayers
+      console.log('sync players', players)
       // for (const [id, player] of Object.entries(ioPlayers)) {
-      //   console.log('uid', uid, 'vs', player.uid)
-      //   if (player.uid === uid) {
-      //     const me = players.find(p => p.uid == uid)
-      //     if (!me.id) {
-      //       me.id = id
-      //       console.log('updating my own socket id ->', id)
-      //       players = players.map(p => {
-      //         if (p.id == me.id) return me
-      //         return p
-      //       })
-      //     }
-      //   } else {
-      //     if (player.uid) {
-      //       // only add others who know a players uid 
-      //       console.log('pushing other player of', player.name)
-      //       player.id = id
-      //       players.push(player)
-      //     } else {
-      //       console.log('skipping over', player.name)
-      //     }
-      //   }
       // }
     })
 
@@ -116,6 +126,10 @@ export default function index() {
       // TODO: this will frequently cause a runtime error because of a null player
       console.log('trying to remove', ioPlayer)
       players = players.filter(p => p.id !== ioPlayer?.id)
+    })
+
+    socket.on("err", code => {
+      console.log('err', code)
     })
 
     socket.on("status", status => {
@@ -137,53 +151,26 @@ export default function index() {
       }
     })
 
-    const playersWithMyUID = players.find(p => p.uid == uid)
-    if (localStorage.getItem('name') && !playersWithMyUID?.length) {
-      const me = new Player(localStorage.getItem('name'), uid)
-      players.push(me)
-      socket.emit('init', {name: localStorage.getItem('name'), uid})
-    }
+    // const playersWithMyUID = players.find(p => p.uid == uid)
+    // if (localStorage.getItem('name') && !playersWithMyUID?.length) {
+    //   const me = new Player(localStorage.getItem('name'), uid)
+    //   players.push(me)
+    //   socket.emit('init', {name: localStorage.getItem('name'), uid})
+    // }
     
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
     // useStore.subscribe( store => {} ) // don't know of a way this is useful yet
     return () => {
       socket.off('disconnected')
       socket.off('status')
+      socket.off('err')
       socket.off('joined')
       socket.off('deck-change')
     }
   }, [])
 
   useEffect(() => {
-    const me = players.find(p => p.uid == uid)
-    if (router.query?.id) {
-      if (router.query?.id !== me?.id) {
-        socket.emit('join', { rkey: router.query.id, id: me.id })
-      }
-    }
-
-    socket.on('init', data => {
-
-      console.log('data', data[0])
-      // router.replace({ pathname: '/game', query: { id } })
-      me.id = data[0]
-      // console.log('set id', me.id)
-      // console.log('players', players)
-      socket.emit('unsub', data[1])
-      addMessage({
-        author: null,
-        body: 'Press "Ctrl" to open this panel & "Esc" to unlock mouse',
-        uid
-      })
-    })
-
-    return () => {
-      socket.off('init')
-    }
-  }, [router])
-
-  useEffect(() => {
-    console.log('update', playersState)
+    if (!players.length) router.push('/')
     const inter = setInterval(() => {
       try {
         assert.deepEqual(players, playersState)

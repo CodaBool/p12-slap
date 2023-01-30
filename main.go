@@ -386,7 +386,7 @@ func main() {
 			// socket.Leave(server.Room(id))
 			socket.Join(server.Room(rkey))
 
-			io.Sockets().To(server.Room(rkey)).Emit("init", [2]string{rkey, id})
+			io.Sockets().To(server.Room(rkey)).Emit("init", rkey)
 			log.Info().Str("Name", players[id].Name).Msg("👋") // .Str("Room", rkey)
 		})
 
@@ -406,6 +406,10 @@ func main() {
 					// TODO: they are connected on the socket but failed to join, so an error should
 					// be sent down to client here
 					log.Error().Msg("Failed init")
+					printRooms(io, true, players)
+					io.Sockets().To(server.Room(id)).Emit("err", "init")
+
+					log.Print("but do I know my name ", m["Name"], " | name: ", players[id].Name, " | rkey: ", m["rkey"])
 				}
 
 				if m["rkey"] != rkey && m["id"] != nil {
@@ -427,7 +431,9 @@ func main() {
 						}
 
 						pSlice := playersInRoom(io, room, players)
-						socket.To(server.Room(room)).Emit("joined", pSlice)
+						io.Sockets().To(server.Room(rkey)).Emit("join", pSlice)
+						// socket.To(server.Room(room)).Emit("join", pSlice)
+						// socket.Leave(server.Room(rkey))
 					}
 				}
 			}
