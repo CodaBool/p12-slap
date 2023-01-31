@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,8 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	ms "github.com/mitchellh/mapstructure"
 
 	"github.com/zishang520/engine.io/types"
 	server "github.com/zishang520/socket.io/socket"
@@ -49,6 +47,16 @@ type Message struct {
 	Author string `json:"author"`
 	Uid    string `json:"uid"`
 	Body   string `json:"body"`
+}
+
+type Update struct {
+	Players   []Player `json:"players"`
+	Stack     []string `json:"stack"`
+	State     string   `json:"state"`
+	FaceOwner string   `json:"faceOwner"`
+	Key       string   `json:"key"`
+	Id        string   `json:"id"`
+	Type      string   `json:"type"`
 }
 
 func check(err error) {
@@ -243,88 +251,12 @@ func print(title string, input any) {
 	log.Info().Msg(fmt.Sprintf("%s: %v", title, string(output)))
 }
 
-// alternative implementation
-// https://stackoverflow.com/a/59568072/15428240
-// TODO: reflex is slow look for better
-func fillStruct(m map[string]interface{}, s interface{}) error {
-	structValue := reflect.ValueOf(s).Elem()
-
-	for name, value := range m {
-		structFieldValue := structValue.FieldByName(cases.Title(language.Und).String(name))
-
-		if !structFieldValue.IsValid() {
-			return fmt.Errorf("No such field: %s in obj", name)
-		}
-
-		if !structFieldValue.CanSet() {
-			return fmt.Errorf("Cannot set %s field value", name)
-		}
-
-		// TODO: handle nil values better
-		if value == nil {
-			if structFieldValue.Type().Name() == "string" {
-				structFieldValue.Set(reflect.ValueOf(""))
-			}
-			continue
-		}
-
-		val := reflect.ValueOf(value)
-		if structFieldValue.Type() != val.Type() {
-			// TODO: this is another bandaid on a horrible solution.
-			// there should be a better way to map variables into struct
-			if fmt.Sprintf("%v", structFieldValue.Type()) == "[]string" {
-				// log.Print("arrays ", name, ": ", value, " | ", val, " | ", structFieldValue.Type().Name(), " | ", structFieldValue.Type())
-				var emptySlice []string // does not allocate 😎
-				structFieldValue.Set(reflect.ValueOf(emptySlice))
-				continue
-			}
-			return errors.New("Provided value type didn't match obj field type")
-		}
-		// log.Print(name, ": ", value, " | ", val)
-
-		structFieldValue.Set(val)
-	}
-	return nil
-}
-
 func printArr(title string, input ...any) {
 	for i := range input {
 		output, err := json.Marshal(i)
 		check(err)
 		log.Info().Msg(fmt.Sprintf("%s: %v", title, string(output)))
 	}
-}
-
-func parsePlayer(input []any) (player Player) {
-	if value, ok := input[0].(map[string]interface{}); ok {
-		// pointer
-		result := &Player{}
-		err := fillStruct(value, result)
-		check(err)
-		return Player{
-			Name: result.Name,
-			Turn: result.Turn,
-			Id:   result.Id,
-			Uid:  result.Uid,
-			Deck: result.Deck,
-		}
-	}
-	return player
-}
-
-func parseMessage(input []any) (message Message) {
-	if value, ok := input[0].(map[string]interface{}); ok {
-		// pointer
-		result := &Message{}
-		err := fillStruct(value, result)
-		check(err)
-		return Message{
-			Author: result.Author,
-			Uid:    result.Uid,
-			Body:   result.Body,
-		}
-	}
-	return message
 }
 
 func rmNonAlphaNum(s string) string {
@@ -381,7 +313,11 @@ func main() {
 		rkey := firstN(strings.ToUpper(rmNonAlphaNum(id)), ROOM_CHAR_SIZE)
 
 		socket.On("init", func(data ...any) {
-			players[id] = parsePlayer(data)
+			var player Player
+			err := ms.Decode(data[0], &player)
+			check(err)
+			player.Id = rkey
+			players[id] = player
 			// TODO: for some reason leaving your original room breaks broadcasts
 			// socket.Leave(server.Room(id))
 			socket.Join(server.Room(rkey))
@@ -394,8 +330,49 @@ func main() {
 		})
 
 		socket.On("chat", func(msg ...any) {
-			message := parseMessage(msg)
+			var message Message
+			err := ms.Decode(msg[0], &message)
+			check(err)
 			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
+		})
+
+		socket.On("status", func(status ...any) {
+			log.Print("sending status ", status[0])
+			socket.Broadcast().To(server.Room(rkey)).Emit("status", status[0])
+		})
+
+		socket.On("sit", func(data ...any) {
+			log.Print("sending sit ", data[0])
+			socket.Broadcast().To(server.Room(rkey)).Emit("sit", data[0])
+		})
+
+		socket.On("drop", func(data ...any) {
+			var result Update
+			err := ms.Decode(data[0], &result)
+			check(err)
+			socket.Broadcast().To(server.Room(rkey)).Emit("drop",
+				map[string]string{"key": result.Key, "type": result.Type},
+			)
+		})
+
+		socket.On("reset", func(data ...any) {
+			log.Print("sending reset ", data[0])
+			socket.Broadcast().To(server.Room(rkey)).Emit("reset", data[0])
+		})
+
+		socket.On("update", func(data ...any) {
+			var result Update
+			err := ms.Decode(data[0], &result)
+			check(err)
+			for _, player := range result.Players {
+				players[player.Id] = player
+			}
+			if result.State == "win" {
+				log.Print("win, sending reset")
+				io.Sockets().To(server.Room(rkey)).Emit("reset")
+				// socket.Broadcast().To(server.Room(rkey)).Emit("reset")
+			}
+			socket.Broadcast().To(server.Room(rkey)).Emit("update", result)
 		})
 
 		socket.On("join", func(data ...any) {

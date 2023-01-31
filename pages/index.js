@@ -44,7 +44,6 @@ export default function index() {
         setLoading(true)
         // TODO: should do this based on btn event click
         if (rkey?.length === ROOM_CHAR_SIZE) {
-          console.log('emit join')
           socket.emit('join', { rkey, id: me.id })
         } else {
           router.push({
@@ -54,15 +53,14 @@ export default function index() {
         }
       }
     })
+
     socket.on("join", ioPlayers => {
-      console.log('sync players', players)
-      for (const [id, player] of Object.entries(ioPlayers)) {
+      for (const player of ioPlayers) {
         if (player.uid !== uid) {
-          console.log('adding', player.name)
+          if (!player.deck) player.deck = []
           players.push(player)
         }
       }
-      console.log('synced players', players)
       router.push({
         pathname: '/game',
         query: { id: rkey }
@@ -104,7 +102,7 @@ export default function index() {
           </>
         }
         {
-          !showBtn && (loading ? <h1>Loading <Spinner animation="border" variant="info"/></h1> : <h1>Joining Game 😎</h1>)
+          !showBtn && (loading ? <h1>Loading <Spinner animation="border" variant="info"/></h1> : <h3>Joining Game 😎</h3>)
         }
       </Popover.Body>
     </Popover>

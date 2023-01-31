@@ -32,6 +32,8 @@
 # Bugs
 - ~~[running in mount twice](https://stackoverflow.com/a/69076030/15428240)~~ this should be solved now
 - (feature?) you will be able to slap on cards which are burned.
+- clicking start while seated attempts to also drop a card
+- will sit on "Joining game" in menu despite failed ws conn
 
 # Compression
 MeshoptDecoder is already used in useGLTF loader
@@ -42,6 +44,7 @@ compared to the newer decoder [here](https://github.com/zeux/meshoptimizer/blob/
 
 # Other
 - empty namespaces will timeout after 45s
+- consider changing opening chat to Enter
 
 # Go Migration notes
 ## Efficiency

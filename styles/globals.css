@@ -21,8 +21,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 24em;
-  height: 12em;
+  width: 28em;
+  height: 18em;
   background-color: black;
   opacity: .5;
   /* border-radius: 0 2em 0 0;  BOTTOM-LEFT */
@@ -60,7 +60,7 @@
   transition-property: height, width, opacity;
 }
 .messages-min {
-  height: 5em;
+  height: 15em;
   /* max-height: 35em; */
 }
 .messages-max {
@@ -69,4 +69,5 @@
 }
 .chat {
   border: 1px solid rgb(255, 255, 255);
+  color: #000000;
 }

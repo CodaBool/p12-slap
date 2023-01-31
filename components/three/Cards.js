@@ -62,11 +62,11 @@ const assets = [
 export const cardKeys = []
 const apiRefs = []
 
-export function dropCard(key, burn, secondBurn) {
+export function dropCard(key, type) {
   const card = apiRefs.find(obj => obj.name === key)
   // card.current.api.wakeUp()
-  if (burn) {
-    if (secondBurn) {
+  if (type.includes('Burn')) {
+    if (type == "secondBurn") {
       card.ref.current.setTranslation({ x: 1, y: 4, z: 0 }, true)
     } else {
       card.ref.current.setTranslation({ x: 1, y: 3.5, z: 0 }, true)
@@ -102,6 +102,7 @@ export default function Cards() {
   const [cards, setCards] = useState()
 
   useEffect(() => {
+    if (!cards?.length) createCards()
     if (cards?.length && !cardKeys.length) {
       for (const name of assets) {
         cardKeys.push(name.split('_')[0].charAt(0) + name.split('_')[2].charAt(0))
@@ -110,21 +111,20 @@ export default function Cards() {
   }, [cards])
 
   useEffect(() => {
-    if (!cards?.length) createCards()
-    socket.on('dropAll', data => {
-      dropCard(data.card, data.burn)
+    socket.on('drop', data => {
+      dropCard(data.key, data.type)
     })
-    socket.on('resetAll', () => {
+    socket.on('reset', () => {
       apiRefs.forEach((obj, i) => {
         obj.ref.current.setTranslation({ x: 1 * i, y: 1, z: 100 }, true)
         obj.ref.current.setRotation({ w: 1, x: 0, y: 0, z: 0 }, true)
       })
     })
     return () => {
-      socket.off('resetAll')
-      socket.off('dropAll')
+      socket.off('reset')
+      socket.off('drop')
     }
-  }, [cards])
+  }, [])
 
   function createCards() {
     const promises = []

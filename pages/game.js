@@ -20,7 +20,7 @@ import Button from '../components/three/Button'
 import { useRouter } from 'next/router'
 import assert from 'assert'
 import { uid } from './index'
-import Text, { TurnText, PlayerText, CardInfo, Timer } from '../components/three/Text'
+import TextMesh, { TurnText, PlayerText, CardInfo, Timer } from '../components/three/Text'
 import {Load} from '../components/Load'
 
 // https://codesandbox.io/s/pixelated-render-pass-forked-to503e?file=%2Fsrc%2FApp.js
@@ -88,38 +88,13 @@ export default function index() {
   }
 
   useEffect(() => {
-    // socket.on("joined", ioPlayers => {
-    //   console.log('got a join new PLAYERS =', ioPlayers)
-    //   for (const [id, player] of Object.entries(ioPlayers)) {
-    //     console.log('uid', uid, 'vs', player.uid)
-    //     if (player.uid === uid) {
-    //       const me = players.find(p => p.uid == uid)
-    //       if (!me.id) {
-    //         me.id = id
-    //         console.log('updating my own socket id ->', id)
-    //         players = players.map(p => {
-    //           if (p.id == me.id) return me
-    //           return p
-    //         })
-    //       }
-    //     } else {
-          // if (player.uid) {
-          //   // only add others who know a players uid 
-          //   console.log('pushing other player of', player.name)
-          //   player.id = id
-          //   players.push(player)
-          // } else {
-          //   console.log('skipping over', player.name)
-          // }
-    //     }
-    //   }
-    // })
     socket.on("join", ioPlayers => {
-      // console.log('got a join new PLAYERS =', ioPlayers)
-      players = ioPlayers
-      console.log('sync players', players)
-      // for (const [id, player] of Object.entries(ioPlayers)) {
-      // }
+      const newPlayers = ioPlayers.filter(ioPlayer => players.every(player => player.uid !== ioPlayer.uid))
+      for (const player of newPlayers) {
+        // TODO: verify this doesn't erase ongoing deck size
+        if (!player.deck) player.deck = []
+        players.push(player)
+      }
     })
 
     socket.on("disconnected", ioPlayer => {
@@ -132,6 +107,10 @@ export default function index() {
       console.log('err', code)
     })
 
+    socket.on("sit", code => {
+      console.log('sit', code)
+    })
+
     socket.on("status", status => {
       console.log('status ->', status)
       setCountdown(true)
@@ -139,24 +118,17 @@ export default function index() {
       setTimeout(() => setStatus(null), 5000)
     })
     
-    socket.on('update-to-clients', data => {
-      // console.log('state', data)
-      // data.face comes in false
-      // TODO: this gets ran 5 times for some reason
-      // setPlayers(data.players)
+    socket.on('update', data => {
+      console.log('update', data)
       players = data.players
       stack = data.stack
-      if (data.face) {
-        faceOwner = data.face
+      if (data.State == 'start') {
+        messageAll(`The game has begun! it is ${players[randIndex].name}'s turn. Take a seat if you haven't already with "Right mouse button" & then drop a card with "Left mouse button"`)
+      }
+      if (data.faceOwner) {
+        faceOwner = data.faceOwner
       }
     })
-
-    // const playersWithMyUID = players.find(p => p.uid == uid)
-    // if (localStorage.getItem('name') && !playersWithMyUID?.length) {
-    //   const me = new Player(localStorage.getItem('name'), uid)
-    //   players.push(me)
-    //   socket.emit('init', {name: localStorage.getItem('name'), uid})
-    // }
     
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
     // useStore.subscribe( store => {} ) // don't know of a way this is useful yet
@@ -164,13 +136,14 @@ export default function index() {
       socket.off('disconnected')
       socket.off('status')
       socket.off('err')
-      socket.off('joined')
+      socket.off('sit')
+      socket.off('join')
+      socket.off('update')
       socket.off('deck-change')
     }
   }, [])
 
   useEffect(() => {
-    if (!players.length) router.push('/')
     const inter = setInterval(() => {
       try {
         assert.deepEqual(players, playersState)
@@ -189,16 +162,27 @@ export default function index() {
     return () => clearTimeout(timeout)
   }, [status])
 
+  useEffect(() => {
+    if (router && !players.length) router.push('/')
+  }, [router])
+
+  function messageAll(body) {
+    const msgObj = { body }
+    addMessage(msgObj)
+    socket.emit('chat', msgObj)
+  }
+
   function start() {
-    // NEAR DUPLICATE of resetAll in <Cards /> this could be dried
     if (players.length < 2) {
       setErrMsg('Not enough players')
       return
     }
     setStatus(null)
 
+
     // deals cards
-    const evenlyDealt = breakIntoParts(cardKeys.length, players.length)
+    // const evenlyDealt = breakIntoParts(cardKeys.length, players.length)
+    const evenlyDealt = breakIntoParts(12, players.length)
     shuffleArr(cardKeys)
 
     evenlyDealt.forEach((size, i) => {
@@ -208,14 +192,16 @@ export default function index() {
     })
 
     // randomly select someone to go first
-    players[Math.floor(Math.random()*players.length)].turn = true
+    const randIndex = Math.floor(Math.random()*players.length)
+    players[randIndex].turn = true
 
-    socket.emit('update-to-server', { players, stack: [], state:'start' })
+
+    messageAll(`The game has begun! it is ${players[randIndex].name}'s turn. Take a seat if you haven't already with "Right mouse button" & then drop a card with "Left mouse button"`)
+
+    socket.emit('update', { players, stack: [], state:'start' })
   }
   
   function gameLoop() {
-    socket.emit('run')
-    // console.log(players)
     const me = players.find(p => p.uid == uid)
     // TODO: deliver a message whenever returning
     if (!me.deck.length) {
@@ -234,9 +220,10 @@ export default function index() {
     // assumes move is valid and server would not block action
     socket.emit('drop', {
       id: me.id,
-      key: me.deck[0]
+      key: me.deck[0],
+      type: "basic"
     })
-    dropCard(me.deck[0])
+    dropCard(me.deck[0], "basic")
 
     // see if the hand was lost
     
@@ -288,7 +275,7 @@ export default function index() {
           for (const i in players) {
             if (players[i].uid == uid) players[i].deck.shift()
           }
-          socket.emit('update-to-server', { players, stack })
+          socket.emit('update', { players, stack })
 
           setTimeout(stack => {
             // this has the stack info at start of duel which
@@ -325,15 +312,51 @@ export default function index() {
 
           // only include people with cards as those who can have a turn
           const withCards = players.filter(p => p.deck.length)
+          
+          // check if you ran out of cards
+          // if (!players[i].deck.length && face) {
+          //   // still in game as long as duel is live
+          //   setErrMsg("Out of cards")
+          // } else if (!players[i].deck.length && !face) {
+          //   setErrMsg("Out of cards")
+          //   messageAll(players[i].name + " is out of cards")
+          // } else {
+          //   // TODO: could be a goal state if last opponent card is dropped
+          //   if (withCards.length < 2) {
   
-          // TODO: could be a goal state if last opponent card is dropped
-          if (withCards.length < 2) {
+          //     setStatus('froze')
+          //     socket.emit('status', 'froze')
+          //     setCountdown(true)
+  
+          //     // update stack everywhere
+          //     socket.emit('update', { players, stack })
+  
+          //     setTimeout(stack => {
+          //       console.log('triggered end game because you played your last card')
+          //       endGame(withCards[0].id)
+          //     }, 5000, stack)
+  
+          //     return
+          //   }
+          // }
+
+
+          if (!players[i].deck.length) {
+            setErrMsg("Out of cards")
+            messageAll(players[i].name + " is out of cards")
+          }
+
+          if (withCards.length < 2 && !players[i].deck.length && !face) {
+  
             setStatus('froze')
             socket.emit('status', 'froze')
             setCountdown(true)
 
             // update stack everywhere
-            socket.emit('update-to-server', { players, stack })
+            // got a weird behavior where this update did not emit
+            // when the loser played last and the opponent had just put down Ace
+            socket.emit('update', { players, stack })
+
 
             setTimeout(stack => {
               console.log('triggered end game because you played your last card')
@@ -344,7 +367,9 @@ export default function index() {
           }
   
           // set next turn
+          console.log('withCards', withCards)
           let index = withCards.findIndex(p => p.turn == true)
+          console.log('player turn index', index)
           players[index].turn = false
           if (index == withCards.length - 1) {
             index = -1
@@ -353,8 +378,7 @@ export default function index() {
         }
       }
     }
-
-    socket.emit('update-to-server', { players, stack, faceOwner: face && uid})
+    socket.emit('update', { players, stack, faceOwner: face ? faceOwner : "" })
   }
 
   function slap() {
@@ -391,34 +415,33 @@ export default function index() {
         if (!players[i].deck.length) return
 
         // take next card
-        let burnedCard = players[i].deck.shift()
+        let cardKey = players[i].deck.shift()
         socket.emit('drop', {
           id: players[i].id,
-          key: burnedCard,
-          burn: true
+          key: cardKey,
+          type: 'firstBurn'
         })
-        dropCard(burnedCard, true)
+        dropCard(cardKey, "firstBurn")
 
         // add to bottom of stack
-        stack = [burnedCard, ...stack]
+        stack = [cardKey, ...stack]
         
         // still have a card
         if (players[i].deck.length) {
 
           // take next card
-          burnedCard = players[i].deck.shift()
+          cardKey = players[i].deck.shift()
           
           socket.emit('drop', {
             id: players[i].id,
-            key: burnedCard,
-            burn: true,
-            secondBurn: true
+            key: cardKey,
+            type: 'secondBurn',
           })
           
-          dropCard(burnedCard, true, true)
+          dropCard(cardKey, 'secondBurn')
           
           // add to bottom of stack
-          stack = [burnedCard, ...stack]
+          stack = [cardKey, ...stack]
         }
 
         // check if youre out of cards and turn should change
@@ -443,7 +466,7 @@ export default function index() {
     
         }
 
-        socket.emit('update-to-server', { players, stack })
+        socket.emit('update', { players, stack })
       }
     }
   }
@@ -456,13 +479,14 @@ export default function index() {
     for (const i in players) {
       if (players[i].id == winnerID) {
         setErrMsg(players[i].name + ' has won!')
+        messageAll(players[i].name + ' has won!')
       }
       players[i].deck = []
       players[i].turn = false
     }
     stack = []
     setStatus('ready')
-    socket.emit('update-to-server', { players, stack, state: 'win' })
+    socket.emit('update', { players, stack, state: 'win' })
   }
 
   function winStack(winnerUID, type) {
@@ -487,8 +511,10 @@ export default function index() {
     }
 
     stack = []
-    socket.emit('update-to-server', { players, stack: [], state: 'win' })
+    socket.emit('update', { players, stack: [], state: 'win' })
   }
+
+  if (!players.length) return <Load />
   
   return (
     <>
@@ -505,7 +531,7 @@ export default function index() {
           <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
             <Stats showPanel={1} />
             <Sky sunPosition={[100, 20, 100]} distance={5000} />
-            <color attach="background" args={['#000000']} />
+            {/* <color attach="background" args={['#000000']} /> */}
             <ambientLight intensity={.4} />
             <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
             <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
@@ -519,17 +545,17 @@ export default function index() {
                 {/* <EnemyBasic /> */}
                 <Cards />
                 {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
-                <Text position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
+                <TextMesh position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
                 {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
                 {/* <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} /> */}
-                <Text position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
+                <TextMesh position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
                 <TurnText players={playersState} />
                 <Timer />
                 {/* <CardInfo stack={stackState} /> */}
                 <PlayerText players={playersState} />
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
-                <Debug />
+                {/* <Debug /> */}
                 <Button position={[0, 2, 0]} action={start} color="green" players={playersState} />
                 {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
                 {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}

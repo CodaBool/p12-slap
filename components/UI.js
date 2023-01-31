@@ -96,8 +96,7 @@ export default function UI({ players }) {
   useEffect(() => {
     ref?.current?.addEventListener('DOMNodeInserted', scrollEvent)
     socket.on('chat', msg => {
-      console.log('got chat from server', msg)
-      // addMessage(msg)
+      addMessage(msg)
     })
     return () => {
       ref?.current?.removeEventListener("DOMNodeInserted", scrollEvent)
@@ -106,6 +105,20 @@ export default function UI({ players }) {
   }, [messages])
 
   // if (players?.length < 2) return
+
+  function resetGame() {
+    const wipedPlayer = players.map(p => {
+      p.turn = false
+      p.deck = []
+      return p
+    })
+    socket.emit('update', {
+      players: wipedPlayer,
+      faceOwner: '',
+      stack: [],
+      state: 'win'
+    })
+  }
 
   return (
     <div className={`ui p-3 ${expanded == true ? 'ui-expanded' : ''}`}>
@@ -136,12 +149,12 @@ export default function UI({ players }) {
           {players?.length < 2
             ? <p style={{color: 'white'}}>Lobby is empty</p>
             : players?.length && players.map((p, index) => (
-              <p key={index} className="p-0 m-0" style={{lineHeight: 1.5, opacity: 1, color: `${p.turn ? 'red' : 'white'}`}}>{p.name ? p.name + ': ': ''}{p.deck?.length > 0 && `${p.deck.length}`}</p>
+              <p key={index} className="p-0 m-0" style={{lineHeight: 1.5, opacity: 1, color: `${p.turn ? '#20ff00' : 'white'}`}}>{p.name ? p.name + ': ': ''}{p.deck?.length > 0 && `${p.deck.length}`}</p>
             ))
           }
           {expanded && 
             <>
-              <Button ref={codeBtn} onClick={copyCode} variant="outline-primary" className="mb-2" style={{width: '10rem'}}>Copy Share Code</Button>
+              <Button ref={codeBtn} onClick={copyCode} variant="outline-primary" className="my-2 w-100" style={{fontSize: '1.3em'}}>Copy Share Code</Button>
               <Overlay target={codeBtn.current} show={show} placement="bottom">
                 {props => (
                   <Tooltip id="overlay" {...props}>
@@ -156,7 +169,8 @@ export default function UI({ players }) {
                   </Tooltip>
                 )}
               </Overlay>
-              <Button onClick={() => router.replace('/')} variant="outline-danger" className="mb-2" style={{width: '10rem'}}>Return to Menu</Button>
+              <Button onClick={() => router.reload("/")} variant="outline-danger" className="mb-2 w-100" style={{fontSize: '1.3em'}}>Return to Menu</Button>
+              <Button onClick={resetGame} variant="outline-danger" className="mb-2 w-100" style={{fontSize: '1.3em'}}>Reset Game</Button>
             </>
           }
         </Col>
