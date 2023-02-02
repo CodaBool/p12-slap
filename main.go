@@ -59,6 +59,12 @@ type Update struct {
 	Type      string   `json:"type"`
 }
 
+type Move struct {
+	X   int16  `json:"x"`
+	Z   int16  `json:"z"`
+	Uid string `json:"uid"`
+}
+
 func check(err error) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
@@ -334,6 +340,47 @@ func main() {
 			err := ms.Decode(msg[0], &message)
 			check(err)
 			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
+		})
+
+		socket.On("move", func(data ...any) {
+			// log.Print("d ", data[0], " ", typeof(data[0]))
+			// if arr, ok := data[0].(Move); ok {
+			// 	log.Print("arr ", arr)
+			// }
+			if arr, ok := data[0].([]any); ok {
+				var move Move
+				if posX, ok := arr[0].(float64); ok {
+					// pos[0] = int16(posX)
+					move.X = int16(posX)
+				} else {
+					log.Print("failed to cast position X to float64")
+				}
+				if posZ, ok := arr[1].(float64); ok {
+					move.Z = int16(posZ)
+					// pos[1] = int16(posY)
+				} else {
+					log.Print("failed to cast position Z to float64")
+				}
+				if uid, ok := arr[2].(string); ok {
+					move.Uid = uid
+				} else {
+					log.Print("failed to cast to string")
+				}
+				// log.Print("broadcast ", move)
+				socket.Broadcast().To(server.Room(rkey)).Emit("move", move)
+				// log.Print(pos, arr[2])
+				// var x int16 = int16(arr[0])
+				// var y int16 = int16(arr[1])
+				// log.Print("d ", " ", arr, " ", typeof(arr[0]))
+				// if anInt, ok := arr[0].(int); ok {
+				// 	log.Print("val ", anInt)
+				// } else {
+				// 	log.Print("ok ", ok, " ", anInt)
+				// }
+			} else {
+				log.Print("outter fail")
+			}
+			// socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
 
 		socket.On("status", func(status ...any) {

@@ -4,9 +4,10 @@ import { useMemo, useEffect, Suspense, useState, useCallback, useReducer } from 
 import * as THREE from 'three'
 import { socket, breakIntoParts, shuffleArr, copy } from '../constants'
 // import Cube from '../components/three/Cube'
-import PlayerComponent from '../components/three/Player'
+// import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
-import PlayerV2 from '../components/three/PlayerV2'
+import PlayersAndChairs from '../components/three/PlayerV2'
+// import AllOtherPlayers from '../components/three/OtherPlayer'
 // import Computer from '../components/three/Computer'
 import UI from '../components/UI'
 import  {CSS3DDemo } from '../components/three/Computer'
@@ -539,8 +540,14 @@ export default function index() {
               {/* <Debug color="black" scale={1}> */}
                 <Ground />
                 {/* <PlayerComponent slap={slap} gameLoop={gameLoop} /> */}
-                <PlayerV2 slap={slap} gameLoop={gameLoop} players={playersState} />
+                <PlayersAndChairs slap={slap} gameLoop={gameLoop} players={playersState} />
+                {/* <AllOtherPlayers players={playersState} /> */}
+                {/* <OtherPlayer players={playersState} num={3} />
+                <OtherPlayer players={playersState} num={4} /> */}
+                {/* <PlayerBlue slap={slap} gameLoop={gameLoop} players={playersState} />
+                <PlayerRed slap={slap} gameLoop={gameLoop} players={playersState} /> */}
                 <Table />
+                {/* <TestModel /> */}
                 {/* <Crosshair /> */}
                 {/* <EnemyBasic /> */}
                 <Cards />
