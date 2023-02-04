@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build && next export",
+    "build": "next build",
+    "export": "next build && next export",
     "n": "nodemon ./server.js localhost 8080",
     "start": "node server.js",
     "dev": "concurrently \"next dev\" \"nodemon --exec go run main.go\"",
