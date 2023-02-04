@@ -39,10 +39,11 @@ export default function index() {
     // router?.prefetch('/game')
     socket.on("init", id => {
       if (!players.length) {
-        const me = new Player(localStorage.getItem('name'), uid, id)
+        // name, uid, id, order
+        const me = new Player(localStorage.getItem('name'), uid, id, 1)
         players.push(me)
         setLoading(true)
-        // TODO: should do this based on btn event click
+        // TODO: this should be done based on btn event click
         if (rkey?.length === ROOM_CHAR_SIZE) {
           socket.emit('join', { rkey, id: me.id })
         } else {
@@ -59,6 +60,14 @@ export default function index() {
         if (player.uid !== uid) {
           if (!player.deck) player.deck = []
           players.push(player)
+        } else {
+          const me = players.find(p => p.uid == uid)
+          const index = players.indexOf(me)
+          if (index > -1) {
+            player.deck = []
+            players.splice(index, 1)
+            players.push(player)
+          }
         }
       }
       router.push({

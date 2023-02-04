@@ -36,11 +36,12 @@ import (
 // TODO: should look into using server.Room instead of string for key values
 
 type Player struct {
-	Name string   `json:"name"`
-	Turn bool     `json:"turn"`
-	Id   string   `json:"id"`
-	Uid  string   `json:"uid"`
-	Deck []string `json:"deck"`
+	Name  string   `json:"name"`
+	Turn  bool     `json:"turn"`
+	Id    string   `json:"id"`
+	Uid   string   `json:"uid"`
+	Deck  []string `json:"deck"`
+	Order int8     `json:"order"`
 }
 
 type Message struct {
@@ -60,9 +61,11 @@ type Update struct {
 }
 
 type Move struct {
-	X   int16  `json:"x"`
-	Z   int16  `json:"z"`
-	Uid string `json:"uid"`
+	X        int16  `json:"x"`
+	Z        int16  `json:"z"`
+	Rotation int16  `json:"rotation"`
+	Uid      string `json:"uid"`
+	Order    int8   `json:"order"`
 }
 
 func check(err error) {
@@ -323,6 +326,7 @@ func main() {
 			err := ms.Decode(data[0], &player)
 			check(err)
 			player.Id = rkey
+			player.Order = 1
 			players[id] = player
 			// TODO: for some reason leaving your original room breaks broadcasts
 			// socket.Leave(server.Room(id))
@@ -350,21 +354,29 @@ func main() {
 			if arr, ok := data[0].([]any); ok {
 				var move Move
 				if posX, ok := arr[0].(float64); ok {
-					// pos[0] = int16(posX)
 					move.X = int16(posX)
 				} else {
 					log.Print("failed to cast position X to float64")
 				}
 				if posZ, ok := arr[1].(float64); ok {
 					move.Z = int16(posZ)
-					// pos[1] = int16(posY)
 				} else {
 					log.Print("failed to cast position Z to float64")
 				}
-				if uid, ok := arr[2].(string); ok {
+				if rotation, ok := arr[2].(float64); ok {
+					move.Rotation = int16(rotation)
+				} else {
+					log.Print("failed to cast rotation to float64")
+				}
+				if uid, ok := arr[3].(string); ok {
 					move.Uid = uid
 				} else {
-					log.Print("failed to cast to string")
+					log.Print("failed to cast uid to string")
+				}
+				if order, ok := arr[4].(float64); ok {
+					move.Order = int8(order)
+				} else {
+					log.Print("failed to cast order to int8")
 				}
 				// log.Print("broadcast ", move)
 				socket.Broadcast().To(server.Room(rkey)).Emit("move", move)
@@ -440,7 +452,17 @@ func main() {
 					if room, ok := m["rkey"].(string); ok {
 
 						// previous room is m["id"]
-						log.Info().Str("Joining", room).Str("Name", players[id].Name).Msg("✈️ ")
+
+						clients := io.Sockets().Adapter().FetchSockets(&server.BroadcastOptions{
+							Rooms: types.NewSet(server.Room(room)),
+						})
+						var count int8 = 0
+						for _, client := range clients {
+							if _, ok := client.(*server.Socket); ok {
+								count++
+							}
+						}
+						log.Info().Str("Joining", room).Str("Name", players[id].Name).Int8("Order", count+1).Msg("✈️ ")
 
 						// TODO: find a way to remove old room
 						// socket.Leave(server.Room(rkey))
@@ -451,6 +473,7 @@ func main() {
 
 						if player, ok := players[id]; ok {
 							player.Id = room
+							player.Order = count + 1
 							players[id] = player
 						}
 

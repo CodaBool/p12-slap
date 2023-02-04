@@ -145,6 +145,7 @@ export default function index() {
   }, [])
 
   useEffect(() => {
+    // console.log("players", playersState)
     const inter = setInterval(() => {
       try {
         assert.deepEqual(players, playersState)

@@ -7,10 +7,11 @@ export const randomName = (Math.random() + 1).toString(36).substring(7)
 export const ROOM_CHAR_SIZE = 6
 
 export class Player {
-  constructor(name, uid, id) {
+  constructor(name, uid, id, order) {
     this.name  = name
     this.id    = id
     this.uid   = uid
+    this.order = order
     this.turn  = false
     this.deck  = []
   }

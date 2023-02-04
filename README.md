@@ -14,9 +14,16 @@
 - [github](https://github.com/mog3n/blocpass/blob/43d24aef44d485ddd3c1a131fa1e9d0b2fa860ba/src/character/Soldier.js)
 - [github](https://github.com/wewerlive/Eco-treats/blob/007f49c0eabde47bb48ff5992c6adc41c175b5df/src/components/eco-treat/Player.jsx)
 
+### Socket.io in Go options
+- [1](https://github.com/ambelovsky/gosf-socketio)
+- [2](https://github.com/Baiguoshuai1/shadiaosocketio)
+- [currently using](https://github.com/zishang520/socket.io)
+- [possible to create a custom one with Melody](https://github.com/olahol/melody)
+
 # Models
 - [Table](https://sketchfab.com/3d-models/low-poly-table-b940256ec5994e26a9e71289d1211b19)
 - [Chair](https://sketchfab.com/3d-models/chair-b07d263a7ab942e6935e77cd75bf1194)
+
 
 # Links
 - [docs](https://docs.pmnd.rs/react-three-fiber/getting-started/your-first-scene)
