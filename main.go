@@ -3,11 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
-	"os/signal"
 	"reflect"
 	"strings"
-	"syscall"
 	"time"
 
 	ms "github.com/mitchellh/mapstructure"
@@ -294,6 +293,7 @@ func main() {
 
 	httpServer := types.CreateServer(nil)
 	config := server.DefaultServerOptions()
+	// TODO: specify the cors here
 	config.SetCors(&types.Cors{Origin: "*"})
 	io := server.NewServer(httpServer, config)
 
@@ -495,27 +495,8 @@ func main() {
 		})
 	})
 
-	PORT := "80"
-	if envPort := os.Getenv("WS_PORT"); envPort != "" {
-		PORT = envPort
-	}
-	httpServer.Listen("127.0.0.1:"+PORT, nil)
-	log.Trace().Msg("listening at localhost:" + PORT)
-	log.Info().Msg("🎧")
-
-	channel := make(chan os.Signal, 1)
-	signal.Notify(channel)
-	exit := make(chan int)
-	go func() {
-		for s := range channel {
-			switch s {
-			case os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-				close(exit)
-				return
-			}
-		}
-	}()
-	exitCode := <-exit
-	httpServer.Close(nil)
-	os.Exit(exitCode)
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/socket.io/", httpServer)
+	fmt.Println(http.ListenAndServe(":80", serveMux))
+	fmt.Println("🎧")
 }
