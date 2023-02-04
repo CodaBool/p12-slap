@@ -6,7 +6,7 @@ import { RigidBody, useRapier, CapsuleCollider, CuboidCollider } from "@react-th
 import * as THREE from "three"
 // import * as RAPIER from "@dimforge/rapier3d-compat"
 import { socket } from '../../constants'
-import { useStore, uid, stack } from '../../pages'
+import { useStore, uid } from '../../pages'
 import { players as pArr } from '../../pages/game'
 import Chairs from './Chair'
 import { SkeletonUtils } from "three-stdlib"
@@ -302,8 +302,8 @@ export default function PlayerV2({ gameLoop, slap, players }) {
       // console.log('RMB | locked =', locked, currentChair)
       if (!locked) return
       changeChair('stand', currentChair)
-      let size = 0
-      stack.forEach(() => size++)
+      let size = 1
+      // stack.forEach(() => size++)
       camera.position.set(0, 3.7 + (size * .05), .7)
       camera.rotation.set(-Math.PI /2.5, 0, 0)
     } else if (e.buttons === 1) { // LMB
