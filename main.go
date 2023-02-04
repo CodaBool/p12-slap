@@ -499,7 +499,7 @@ func main() {
 	if envPort := os.Getenv("WS_PORT"); envPort != "" {
 		PORT = envPort
 	}
-	httpServer.Listen("localhost:"+PORT, nil)
+	httpServer.Listen("127.0.0.1:"+PORT, nil)
 	log.Trace().Msg("listening at localhost:" + PORT)
 	log.Info().Msg("🎧")
 

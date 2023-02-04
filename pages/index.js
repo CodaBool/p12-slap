@@ -9,7 +9,7 @@ import Spinner from 'react-bootstrap/Spinner'
 import { useRouter } from 'next/router'
 import Modal from '../components/Modal'
 import Background from '../components/Background'
-import { socket, ROOM_CHAR_SIZE, Player } from '../constants'
+import { socket, ROOM_CHAR_SIZE, Player, SOCKET_URL } from '../constants'
 import useScreen from '../constants/useScreen'
 import { players } from './game'
 
@@ -80,6 +80,10 @@ export default function index() {
       socket.off("join")
     }
   }, [rkey])
+
+  useEffect(() => {
+    console.log('socket connection =', socket?.connected, ' @ ', SOCKET_URL, socket)
+  }, [])
 
   function initialize() {
     setShowBtn(false)
