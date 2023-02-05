@@ -15,12 +15,12 @@ jobs:
       # The repo name must be validated since it will be used in the S3 Bucket creation when saving Serverless state
       # Repo name must follow S3 Naming conventions, no space & no uppercase
       # Lower Cases the Repo name, Github already removes space
-      run: |
-        repo=${GITHUB_REPOSITORY#CodaBool/}
-        echo "##[set-output name=repo;]${repo,,}" 
-        echo "##[set-output name=stage;]${GITHUB_REF#refs/heads/}"
-        build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
-        echo "##[set-output name=build;]${build}"
+        run: |
+          repo=${GITHUB_REPOSITORY#CodaBool/}
+          echo "##[set-output name=repo;]${repo,,}" 
+          echo "##[set-output name=stage;]${GITHUB_REF#refs/heads/}"
+          build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
+          echo "##[set-output name=build;]${build}"
       - uses: actions/setup-go@v3
         with:
           go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
