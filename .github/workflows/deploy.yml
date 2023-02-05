@@ -44,11 +44,7 @@ jobs:
         working-directory: ./op
         run: |
           packer init .
-          echo ${{ steps.extract.outputs.build }}
-          packer build . -var="ami_name=${{ steps.extract.outputs.build }}"
-        # -color=false
-        # packer validate ami.pkr.hcl # this was pretty time consuming
-        # could try using -syntax-only
+          packer build -var="ami_name=slap-${{ steps.extract.outputs.build }}" .
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.3.7 # https://releases.hashicorp.com/terraform

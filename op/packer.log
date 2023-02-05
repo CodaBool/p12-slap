@@ -1,0 +1,104 @@
+2023/02/05 17:58:06 [INFO] Packer version: 1.8.5 [go1.18.9 linux amd64]
+2023/02/05 17:58:06 [TRACE] discovering plugins in /usr/bin
+2023/02/05 17:58:06 [TRACE] discovering plugins in /home/codabool/.config/packer/plugins
+2023/02/05 17:58:06 [DEBUG] Discovered plugin: amazon = /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64
+2023/02/05 17:58:06 [INFO] found external [chroot ebs ebssurrogate ebsvolume instance] builders from amazon plugin
+2023/02/05 17:58:06 [INFO] found external [import] post-processors from amazon plugin
+2023/02/05 17:58:06 found external [ami parameterstore secretsmanager] datasource from amazon plugin
+2023/02/05 17:58:06 [TRACE] discovering plugins in .
+2023/02/05 17:58:06 [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2023/02/05 17:58:06 [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/codabool/.packerconfig
+2023/02/05 17:58:06 [WARN] Config file doesn't exist: /home/codabool/.packerconfig
+2023/02/05 17:58:06 [INFO] Setting cache directory: /home/codabool/.cache/packer
+2023/02/05 17:58:06 [TRACE] listing potential installations for "github.com/hashicorp/amazon" that match ">= 1.2.1". plugingetter.ListInstallationsOptions{FromFolders:[]string{"/usr/bin/packer", ".", "/home/codabool/.config/packer/plugins"}, BinaryInstallationOptions:plugingetter.BinaryInstallationOptions{APIVersionMajor:"5", APIVersionMinor:"0", OS:"linux", ARCH:"amd64", Ext:"", Checksummers:[]plugingetter.Checksummer{plugingetter.Checksummer{Type:"sha256", Hash:(*sha256.digest)(0xc000b46080)}}}}
+2023/02/05 17:58:06 [TRACE] Found the following "github.com/hashicorp/amazon" installations: [{/home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 v1.2.1}]
+2023/02/05 17:58:06 [INFO] found external [chroot ebs ebssurrogate ebsvolume instance] builders from amazon plugin
+2023/02/05 17:58:06 [INFO] found external [import] post-processors from amazon plugin
+2023/02/05 17:58:06 found external [ami parameterstore secretsmanager] datasource from amazon plugin
+2023/02/05 17:58:06 [TRACE] validateValue: not active for ami_name, so skipping
+2023/02/05 17:58:06 [TRACE] Starting external plugin /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 start builder ebs
+2023/02/05 17:58:06 Starting plugin: /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 []string{"/home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64", "start", "builder", "ebs"}
+2023/02/05 17:58:06 Waiting for RPC address for: /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 Plugin address: unix /tmp/packer-plugin2222644467
+2023/02/05 17:58:06 Received unix RPC address for /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64: addr is /tmp/packer-plugin2222644467
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 Waiting for connection...
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 Serving a plugin connection...
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 [TRACE] starting builder ebs
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 [INFO] (aws): No AWS timeout and polling overrides have been set. Packer will default to waiter-specific delays and timeouts. If you would like to customize the length of time between retries and max number of retries you may do so by setting the environment variables AWS_POLL_DELAY_SECONDS and AWS_MAX_ATTEMPTS or the configuration options aws_polling_delay_seconds and aws_polling_max_attempts to your desired values.
+2023/02/05 17:58:06 [TRACE] Starting internal plugin packer-provisioner-shell
+2023/02/05 17:58:06 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "plugin", "packer-provisioner-shell"}
+2023/02/05 17:58:06 Waiting for RPC address for: /usr/bin/packer
+2023/02/05 17:58:06 packer-provisioner-shell plugin: [INFO] Packer version: 1.8.5 [go1.18.9 linux amd64]
+2023/02/05 17:58:06 packer-provisioner-shell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2023/02/05 17:58:06 packer-provisioner-shell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/codabool/.packerconfig
+2023/02/05 17:58:06 packer-provisioner-shell plugin: [WARN] Config file doesn't exist: /home/codabool/.packerconfig
+2023/02/05 17:58:06 packer-provisioner-shell plugin: [INFO] Setting cache directory: /home/codabool/.cache/packer
+2023/02/05 17:58:06 packer-provisioner-shell plugin: args: []string{"packer-provisioner-shell"}
+2023/02/05 17:58:06 packer-provisioner-shell plugin: Plugin address: unix /tmp/packer-plugin3877921273
+2023/02/05 17:58:06 packer-provisioner-shell plugin: Waiting for connection...
+2023/02/05 17:58:06 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin3877921273
+2023/02/05 17:58:06 packer-provisioner-shell plugin: Serving a plugin connection...
+2023/02/05 17:58:06 ui: [1;32mlearn-packer.amazon-ebs.al2: output will be in this color.[0m
+2023/02/05 17:58:06 ui: 
+2023/02/05 17:58:06 Build debug mode: false
+2023/02/05 17:58:06 Force build: false
+2023/02/05 17:58:06 On error: 
+2023/02/05 17:58:06 Waiting on builds to complete...
+2023/02/05 17:58:06 Starting build run: learn-packer.amazon-ebs.al2
+2023/02/05 17:58:06 Running builder: 
+2023/02/05 17:58:06 [INFO] (telemetry) Starting builder amazon-ebs.al2
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 [INFO] AWS Auth provider used: "EnvProvider"
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 Found region us-east-1
+2023/02/05 17:58:06 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:06 [INFO] AWS Auth provider used: "EnvProvider"
+2023/02/05 17:58:06 ui: [1;32m==> learn-packer.amazon-ebs.al2: Prevalidating any provided VPC information[0m
+2023/02/05 17:58:06 ui: [1;32m==> learn-packer.amazon-ebs.al2: Prevalidating AMI Name: d0070512[0m
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:07 Using AMI Filters {
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:   Filters: [
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     {
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Name: "name",
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Values: ["amzn2-ami-kernel-*-hvm-*"]
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     },
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     {
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Name: "root-device-type",
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Values: ["ebs"]
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     },
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     {
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Name: "virtualization-type",
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Values: ["hvm"]
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     },
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     {
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Name: "architecture",
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:       Values: ["arm64"]
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:     }
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:   ],
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin:   Owners: ["amazon"]
+2023/02/05 17:58:07 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: }
+2023/02/05 17:58:07 ui: [0;32m    learn-packer.amazon-ebs.al2: Found Image ID: ami-084237e82d7842286[0m
+2023/02/05 17:58:07 ui: [1;32m==> learn-packer.amazon-ebs.al2: Creating temporary keypair: packer_63e0347e-f5b4-28f4-22a3-8bc4f109aff2[0m
+2023/02/05 17:58:08 ui: [1;32m==> learn-packer.amazon-ebs.al2: Creating temporary security group for this instance: packer_63e03480-8b00-d0e1-f968-23827529fd67[0m
+2023/02/05 17:58:08 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:08 [DEBUG] Waiting for temporary security group: sg-0e95e9accd8e1c459
+2023/02/05 17:58:09 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:09 [DEBUG] Found security group sg-0e95e9accd8e1c459
+2023/02/05 17:58:09 ui: [1;32m==> learn-packer.amazon-ebs.al2: Authorizing access to port 22 from [0.0.0.0/0] in the temporary security groups...[0m
+2023/02/05 17:58:09 ui: [1;32m==> learn-packer.amazon-ebs.al2: Launching a source AWS instance...[0m
+2023/02/05 17:58:10 packer-provisioner-shell plugin: Received interrupt signal (count: 1). Ignoring.
+2023/02/05 17:58:10 ui error: Cancelling build after receiving interrupt
+2023/02/05 17:58:10 packer-plugin-amazon_v1.2.1_x5.0_linux_amd64 plugin: 2023/02/05 17:58:10 Received interrupt signal (count: 1). Ignoring.
+2023/02/05 17:58:10 Cancelling builder after context cancellation context canceled
+2023/02/05 17:58:11 ui: [0;32m    learn-packer.amazon-ebs.al2: Instance ID: i-0ef8574eaeee24c3d[0m
+2023/02/05 17:58:11 ui: [1;32m==> learn-packer.amazon-ebs.al2: Waiting for instance (i-0ef8574eaeee24c3d) to become ready...[0m
+2023/02/05 17:58:11 ui error: [1;31m==> learn-packer.amazon-ebs.al2: Error waiting for instance (i-0ef8574eaeee24c3d) to become ready: RequestCanceled: waiter context canceled
+==> learn-packer.amazon-ebs.al2: caused by: context canceled[0m
+2023/02/05 17:58:11 ui: [1;32m==> learn-packer.amazon-ebs.al2: Terminating the source AWS instance...[0m
+2023/02/05 17:58:27 ui: [1;32m==> learn-packer.amazon-ebs.al2: No volumes to clean up, skipping[0m
+2023/02/05 17:58:27 ui: [1;32m==> learn-packer.amazon-ebs.al2: Deleting temporary security group...[0m
+2023/02/05 17:58:28 ui: [1;32m==> learn-packer.amazon-ebs.al2: Deleting temporary keypair...[0m
+2023/02/05 17:58:28 [INFO] (telemetry) ending amazon-ebs.al2
+2023/02/05 17:58:28 ui error: [1;31mBuild 'learn-packer.amazon-ebs.al2' errored after 22 seconds 10 milliseconds: Error waiting for instance (i-0ef8574eaeee24c3d) to become ready: RequestCanceled: waiter context canceled
+caused by: context canceled[0m
+2023/02/05 17:58:28 ui: 
+==> Wait completed after 22 seconds 10 milliseconds
+2023/02/05 17:58:28 ui: Cleanly cancelled builds after being interrupted.
+2023/02/05 17:58:28 [INFO] (telemetry) Finalizing.
+2023/02/05 17:58:29 waiting for all plugin processes to complete...
+2023/02/05 17:58:29 /home/codabool/.config/packer/plugins/github.com/hashicorp/amazon/packer-plugin-amazon_v1.2.1_x5.0_linux_amd64: plugin process exited
+2023/02/05 17:58:29 /usr/bin/packer: plugin process exited
