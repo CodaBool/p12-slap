@@ -6,8 +6,8 @@ jobs:
   deploy:
     if: "! contains(github.event.commits[0].message, '[no ci]')"
     permissions:
-      id-token: write
-      contents: read
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,9 +20,10 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
+          role-session-name: samplerolesession
           aws-region: us-east-1
       - name: test
-        run: aws sts get-caller-identity
+        run: aws s3api list-buckets --query "Buckets[].Name"
 
       # - name: SSH
       #   if: ${{ github.ref == 'refs/heads/main' }}
