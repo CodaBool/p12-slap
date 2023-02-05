@@ -48,6 +48,14 @@
 - [post processing](https://github.com/pmndrs/react-postprocessing) and [docs](https://docs.pmnd.rs/react-postprocessing/introduction)
 - [vr / ar](https://github.com/pmndrs/react-xr)
 
+# Packer
+> debug
+```
+export PACKER_LOG_PATH="./packer.log"
+export PACKER_LOG=10
+packer build -debug .
+```
+
 # Bugs
 - ~~[running in mount twice](https://stackoverflow.com/a/69076030/15428240)~~ this should be solved now
 - (feature?) you will be able to slap on cards which are burned.
