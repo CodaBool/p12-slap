@@ -1,8 +1,13 @@
 name: slap
-on: [push]
+on:
+  push:
+    branchs: [main]
 jobs:
   deploy:
     if: "! contains(github.event.commits[0].message, '[no ci]')"
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -10,11 +15,14 @@ jobs:
         with:
           go-version: '^1.20.0'
       - name: Build
-        run: |
-          ls
-          go version
-          go build main.go
-          ls
+        run: go build main.go
+      - name: Upload
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
+          aws-region: us-east-1
+      - name: test
+        run: aws sts get-caller-identity
 
       # - name: SSH
       #   if: ${{ github.ref == 'refs/heads/main' }}
