@@ -7,8 +7,12 @@ packer {
   }
 }
 
+variable "ami_name" {
+  type = string
+}
+
 source "amazon-ebs" "al2" {
-  ami_name      = "slap"
+  ami_name      = var.ami_name
   instance_type = "t4g.nano"
   region        = "us-east-1"
   source_ami_filter {
