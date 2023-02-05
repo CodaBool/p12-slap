@@ -40,9 +40,9 @@ jobs:
         working-directory: ./op
         run: |
           packer init .
-          packer build . -var="ami_name=${{ steps.extract.outputs.build }}"
-        # env:
-        #   BUILD_ID: ${{ steps.extract.outputs.build }}
+          packer build . -var="ami_name=$BUILD_ID"
+        env:
+          BUILD_ID: ${{ steps.extract.outputs.build }}
         # -color=false
         # packer validate ami.pkr.hcl # this was pretty time consuming
         # could try using -syntax-only
