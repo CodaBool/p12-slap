@@ -21,6 +21,10 @@ jobs:
           echo "##[set-output name=stage;]${GITHUB_REF#refs/heads/}"
           build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
           echo "##[set-output name=build;]${build}"
+        id: extract # allows use of ${{ steps.extract.outputs.stage }} for pipeline stage/repo
+        env:
+          SHA: ${{ toJSON(github.sha) }}
+          RUN_NUMBER: ${{ toJSON(github.run_number) }}
       - uses: actions/setup-go@v3
         with:
           go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
@@ -31,8 +35,8 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
           aws-region: us-east-1
-      - name: Upload
-        run: aws s3 cp server s3://codabool-go/server
+      # - name: Upload
+      #   run: aws s3 cp server s3://codabool-go/server
       - uses: hashicorp/setup-packer@main
         with:
           version: "1.8.5" # https://releases.hashicorp.com/packer
@@ -40,9 +44,8 @@ jobs:
         working-directory: ./op
         run: |
           packer init .
-          packer build . -var="ami_name=$BUILD_ID"
-        env:
-          BUILD_ID: ${{ steps.extract.outputs.build }}
+          echo ${{ steps.extract.outputs.build }}
+          packer build . -var="ami_name=${{ steps.extract.outputs.build }}"
         # -color=false
         # packer validate ami.pkr.hcl # this was pretty time consuming
         # could try using -syntax-only
