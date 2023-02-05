@@ -1,0 +1,33 @@
+name: slap
+on: [push]
+jobs:
+  deploy:
+    if: "! contains(github.event.commits[0].message, '[no ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+          with:
+            go-version: '^1.20.0'
+
+      - name: Build
+        run: |
+          ls
+          go version
+          go build main.go
+          ls
+
+      # - name: SSH
+      #   if: ${{ github.ref == 'refs/heads/main' }}
+      #   uses: appleboy/ssh-action@master
+      #   env: 
+      #     PASS: ${{ secrets.PASSWORD }}
+      #   with:
+      #     host: ${{ secrets.HOST }}
+      #     username: ${{ secrets.USERNAME }}
+      #     password: ${{ secrets.PASSWORD }}
+      #     envs: PASS
+      #     script: |
+      #       cd /home/codabool/codadash.com
+      #       git pull
+      #       echo "$PASS" | sudo -S systemctl restart codadash

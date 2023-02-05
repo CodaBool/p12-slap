@@ -20,6 +20,18 @@
 - [currently using](https://github.com/zishang520/socket.io)
 - [possible to create a custom one with Melody](https://github.com/olahol/melody)
 
+### no downtime reloads
+> these may not work with sockets and some AWS solution may be better
+
+- [no downtime reload with Echo](https://medium.com/web-developer/golang%E3%83%BCzero-downtime-deploys-and-rollbacks-go-http-server%E3%83%BCecho-web-framework-apache-12a9a21bfc25)
+- [simple systemd solution](https://bunrouter.uptrace.dev/guide/go-zero-downtime-restarts.html)
+  - [systemd examples](https://www.reddit.com/r/golang/comments/oq7rvo/comment/h6gzbnn/?utm_source=share&utm_medium=web2x&context=3)
+- [overwrite bin and stop](https://www.reddit.com/r/golang/comments/rcebag/comment/hnugioa/?utm_source=share&utm_medium=web2x&context=3)
+-  I see options using the SO_REUSEADDR and SO_REUSEPORT, but this does random load balancing. I would need this to be sticky 
+  - [basic](https://wutch.medium.com/zero-downtime-api-in-golang-d5b6a52cc0ed)
+  - [too long didnt read 😂](https://www.haproxy.com/blog/truly-seamless-reloads-with-haproxy-no-more-hacks)
+  - [too long didnt read 😂](https://goteleport.com/blog/golang-ssh-bastion-graceful-restarts)
+
 # Models
 - [Table](https://sketchfab.com/3d-models/low-poly-table-b940256ec5994e26a9e71289d1211b19)
 - [Chair](https://sketchfab.com/3d-models/chair-b07d263a7ab942e6935e77cd75bf1194)
