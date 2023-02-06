@@ -30,10 +30,10 @@ output "price" {
 }
 
 output "instance" {
-  value = module.instance
+  value = module.ec2.instance
 }
 output "eip" {
-  value = module.eip
+  value = module.ec2.eip
 }
 
 variable "ssh_ip" {

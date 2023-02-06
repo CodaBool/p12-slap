@@ -14,11 +14,11 @@ jobs:
       - name: Extract Pipline Vars
         run: |
           repo=${GITHUB_REPOSITORY#CodaBool/}
-          echo "##[set-output name=repo;]${repo,,}" 
-          echo "##[set-output name=stage;]${GITHUB_REF#refs/heads/}"
+          echo "repo=${repo,,}" >> $GITHUB_STATE
+          echo "stage=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
           build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
-          echo "##[set-output name=build;]${build}"
-          echo "##[set-output name=run;]${RUN_NUMBER}"
+          echo "build=${build}" >> $GITHUB_STATE
+          echo "run=${RUN_NUMBER}" >> $GITHUB_STATE
         id: extract # allows use of ${{ steps.extract.outputs.stage }} for pipeline stage/repo
         env:
           SHA: ${{ toJSON(github.sha) }}
