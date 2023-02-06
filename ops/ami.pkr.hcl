@@ -57,27 +57,45 @@ build {
     // ]
     inline = [
       "sudo yum update -y -q",
-      "sudo yum remove docker -y",
+
+      // AWS monitoring
+      "sudo yum install amazon-cloudwatch-agent -y -q",
+
+      // remove docker
+      "sudo yum remove docker -y -q",
       "sudo groupdel docker",
-      "sudo yum install amazon-cloudwatch-agent -y",
       "sudo yum clean all",
       "sudo yum makecache",
       "sudo grubby --update-kernel=ALL --remove-args=\"systemd.unified_cgroup_hierarchy=0\"",
+
       // "sudo yum install git -y -q",
       // "sudo yum install golang -y -q",
       // "git clone https://github.com/CodaBool/p12-slap.git slap",
       // "cd slap",
+
+      // add Go binary
       "sudo chmod 750 /tmp/server",
       "sudo chown root:root /tmp/server",
       "sudo cp /tmp/server /opt/server",
+
+      // add monitoring config
       "sudo chmod 750 /tmp/agent.json",
       "sudo chown root:root /tmp/agent.json",
       "sudo cp /tmp/agent.json /opt/aws/agent.json",
+
+      // start monitoring process
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json",
-      // "sudo cp / /opt/server",
+
+      // create service
       "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
+
+      // start service
       "sudo systemctl --now enable server",
+
+      // create some aliases for fast commands
       "printf \"\nalias reload='sudo systemctl daemon-reload'\nalias start='sudo systemctl start server'\nalias status='systemctl status server'\nalias restart='sudo systemctl restart server'\nalias stop='sudo systemctl stop server'\nalias logs='journalctl -f -u server'\n\" >> ~/.bashrc",
+
+      // remove docker folders
       "sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker"
     ]
   }
