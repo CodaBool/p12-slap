@@ -53,9 +53,8 @@ build {
     // ]
     inline = [
       "sudo yum update -y -q",
-      "sudo yum remove docker-compose -y",
+      "sudo yum remove docker-compose -y && sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker",
       "sudo groupdel docker",
-      "sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker",
       "sudo yum clean all",
       "sudo yum makecache",
       "sudo grubby --update-kernel=ALL --remove-args=\"systemd.unified_cgroup_hierarchy=0\"",
