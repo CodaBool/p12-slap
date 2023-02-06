@@ -53,7 +53,7 @@ build {
     // ]
     inline = [
       "sudo yum update -y -q",
-      "sudo yum remove docker-compose -y && sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker",
+      "sudo yum remove docker-compose -y",
       "sudo groupdel docker",
       "sudo yum clean all",
       "sudo yum makecache",
@@ -72,7 +72,8 @@ build {
       // "sudo cp / /opt/server",
       "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
       "sudo systemctl --now enable server",
-      "printf \"\nalias reload='sudo systemctl daemon-reload'\nalias start='sudo systemctl start server'\nalias status='systemctl status server'\nalias restart='sudo systemctl restart server'\nalias stop='sudo systemctl stop server'\nalias logs='journalctl -f -u server'\n\" >> ~/.bashrc"
+      "printf \"\nalias reload='sudo systemctl daemon-reload'\nalias start='sudo systemctl start server'\nalias status='systemctl status server'\nalias restart='sudo systemctl restart server'\nalias stop='sudo systemctl stop server'\nalias logs='journalctl -f -u server'\n\" >> ~/.bashrc",
+      "sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker"
     ]
   }
 }
