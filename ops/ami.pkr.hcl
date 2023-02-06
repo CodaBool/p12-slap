@@ -47,6 +47,10 @@ build {
     source = "agent.json"
     destination = "/tmp/agent.json"
   }
+
+  // I used a gist guide on how to setup log agent as well as the AWS docs
+  // gist = https://gist.github.com/adam-hanna/06afe09209589c80ba460662f7dce65c
+  // docs = https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html 
   provisioner "shell" {
     // environment_vars = [
     //   "FOO=hello world",
