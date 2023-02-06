@@ -16,9 +16,9 @@ terraform {
 module "ec2" {
   source   = "github.com/CodaBool/AWS/modules/ec2"
   name     = "slap" # this must match what packer tag named the ami
-  price    = "0.0017"
+  # price    = "0.0017"
   instance_type = "t4g.nano"
-  # price    = data.external.lowest_price.result.price
+  price    = data.external.lowest_price.result.price
 }
 
 data "external" "lowest_price" {
