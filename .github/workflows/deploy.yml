@@ -54,4 +54,4 @@ jobs:
         working-directory: ./ops
         run: |
           terraform init
-          terraform apply -auto-approve -var="ssh_ip=${{ secrets.AZURE_CREDENTIALS }}"
+          terraform apply -auto-approve -var="ssh_ip=${{ secrets.WIN_IP }}"
