@@ -1,0 +1,77 @@
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "logfile": "/opt/aws/server.log",
+    "omit_hostname": false,
+    "debug": false
+  },
+  "metrics": {
+    "force_flush_interval": 60,
+    "namespace": "Slap",
+    "metrics_collected": {
+      "cpu": {
+        "totalcpu": false,
+        "resources": [ "*" ],
+        "measurement": [
+          "time_active", "time_guest", "time_guest_nice", "time_idle", "time_iowait", "time_irq", "time_nice", "time_softirq", "time_steal", "time_system", "time_user", "usage_active", "usage_guest", "usage_guest_nice", "usage_idle", "usage_iowait", "usage_irq", "usage_nice", "usage_softirq", "usage_steal", "usage_system", "usage_user"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "disk": {
+        "measurement": [
+          "free", "total", "used", "used_percent", "inodes_free", "inodes_used", "inodes_total"
+        ], 
+        "metrics_collection_interval": 60
+      },
+      "diskio": {
+        "measurement": [
+          "reads", "writes", "read_bytes", "write_bytes", "read_time", "write_time", "io_time", "iops_in_progress"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "swap": {
+        "measurement": ["free", "used", "used_percent"],
+        "metrics_collection_interval": 60
+      },
+      "mem": {
+        "measurement": ["active", "available", "available_percent", "buffered", "cached", "free", "inactive", "total", "used", "used_percent"],
+        "metrics_collection_interval": 60
+      },
+      "net": {
+        "measurement": [
+          "bytes_sent", "bytes_recv", "drop_in", "drop_out", "err_in", "err_out", "packets_sent", "packets_recv"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "netstat": {
+        "measurement": [
+          "tcp_close", "tcp_close_wait", "tcp_closing", "tcp_established", "tcp_fin_wait1", "tcp_fin_wait2", "tcp_last_ack", "tcp_listen", "tcp_none", "tcp_syn_sent", "tcp_syn_recv", "tcp_time_wait", "udp_socket"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "processes": {
+        "measurement": [
+          "blocked", "dead", "idle", "paging", "running", "sleeping", "stopped", "total", "total_threads", "wait", "zombies"
+        ],
+        "metrics_collection_interval": 60
+      }
+    }
+  }, 
+  "logs": {
+    "log_stream_name": "log",
+    "force_flush_interval": 5,
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/server.log",
+            "auto_removal": false,
+            "log_group_name": "/aws/ec2/slap",
+            "retention_in_days": 14,
+            "timestamp_format": "%H: %M: %S%y%b%-d"
+          }
+        ]
+      }
+    }
+  }
+}
