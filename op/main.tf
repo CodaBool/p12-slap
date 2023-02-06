@@ -12,7 +12,22 @@ terraform {
   }
 }
 
+# TODO: this could potentially raise the price
 module "ec2" {
-  source = "github.com/CodaBool/AWS/modules/ec2"
-  ami = "ami-0720d270ba3fe7787"
+  source   = "github.com/CodaBool/AWS/modules/ec2"
+  ami_name = var.ami_name
+  name     = "slap"
+  price    = data.external.lowest_price.result.price
+}
+
+data "external" "lowest_price" {
+  program = ["bash", "price.sh"]
+}
+
+output "price" {
+  value = data.external.lowest_price.result.price
+}
+
+variable "ami_name" {
+  type = string
 }

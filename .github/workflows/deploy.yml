@@ -54,4 +54,5 @@ jobs:
         run: |
           terraform init
           terraform plan -no-color
+          terraform apply -auto-approve -var="ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.build }}"
       # - run: terraform plan -no-color

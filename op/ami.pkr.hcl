@@ -56,7 +56,7 @@ build {
       // "sudo cp / /opt/server",
       "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\\nRestart=always\\nRestartSec=10s\\nExecStart=/opt/server\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
       "sudo systemctl --now enable server",
-      "printf \"\nalias start='systemctl start server'\nalias restart='systemctl restart server'\nalias stop='systemctl stop server'\nalias logs='journalctl -u server --follow'\n\" >> ~/.bashrc"
+      "printf \"\nalias start='systemctl start server'\nalias status='systemctl status server'\nalias restart='systemctl restart server'\nalias stop='systemctl stop server'\nalias logs='journalctl -u server --follow'\n\" >> ~/.bashrc"
     ]
   }
 }
