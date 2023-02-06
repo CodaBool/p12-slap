@@ -29,14 +29,17 @@ jobs:
         with:
           go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
       - name: Build Binary
-        run: go build main.go
-      - name: Assume
-        uses: aws-actions/configure-aws-credentials@v1
+        run: |
+          GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ./op/server main.go
+          ls ./op
+          echo $GOOS
+          ls /
+      - uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
           aws-region: us-east-1
       # - name: Upload
-      #   run: aws s3 cp server s3://codabool-go/server
+      #   run: aws s3 cp server s3://codabool-go/server # s3 cp will overwrite
       - uses: hashicorp/setup-packer@main
         with:
           version: "1.8.5" # https://releases.hashicorp.com/packer
