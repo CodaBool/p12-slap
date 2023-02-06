@@ -7,12 +7,17 @@ packer {
   }
 }
 
-variable "ami_name" {
+variable "unique_ami_name" {
   type = string
 }
 
+variable "common_ami_name" {
+  type = string
+  default = "slap"
+}
+
 source "amazon-ebs" "al2" {
-  ami_name      = var.ami_name
+  ami_name      = var.unique_ami_name
   instance_type = "t4g.nano"
   region        = "us-east-1"
   source_ami_filter {
@@ -27,7 +32,7 @@ source "amazon-ebs" "al2" {
   }
   ssh_username = "ec2-user"
   tags = {
-    Name = "slap"
+    Name = var.common_ami_name
   }
 }
 

@@ -28,6 +28,6 @@ output "price" {
   value = data.external.lowest_price.result.price
 }
 
-variable "ami_name" {
+variable "unique_ami_name" {
   type = string
 }

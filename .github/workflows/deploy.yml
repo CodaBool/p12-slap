@@ -21,6 +21,7 @@ jobs:
           echo "##[set-output name=stage;]${GITHUB_REF#refs/heads/}"
           build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
           echo "##[set-output name=build;]${build}"
+          echo "##[set-output name=run;]${RUN_NUMBER}"
         id: extract # allows use of ${{ steps.extract.outputs.stage }} for pipeline stage/repo
         env:
           SHA: ${{ toJSON(github.sha) }}
@@ -43,7 +44,7 @@ jobs:
         working-directory: ./op
         run: |
           packer init .
-          packer build -var="ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.build }}" .
+          packer build -var="unique_ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.run }}" .
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: hashicorp/setup-terraform@v2
@@ -54,5 +55,5 @@ jobs:
         run: |
           terraform init
           terraform plan -no-color
-          terraform apply -auto-approve -var="ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.build }}"
+          terraform apply -auto-approve -var="unique_ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.run }}"
       # - run: terraform plan -no-color
