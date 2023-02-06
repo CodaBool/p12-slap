@@ -37,6 +37,12 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
           aws-region: us-east-1
+      - name: check env
+        run: |
+          echo ${{ steps.extract.outputs.repo }}
+          echo ${{ steps.extract.outputs.stage }}
+          echo ${{ steps.extract.outputs.build }}
+          echo ${{ steps.extract.outputs.run }}
       # - name: Pricing
       #   run: |
       #     price=$(aws --region=us-east-1 ec2 describe-spot-price-history --instance-types t4g.nano --start-time=$(date +%s) --product-descriptions="Linux/UNIX" --query 'SpotPriceHistory[*].{az:AvailabilityZone, price:SpotPrice}' | jq -r ".[] | select(.az == \"us-east-1a\") | .price")
