@@ -43,8 +43,8 @@ jobs:
           price_day=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24, 2))" $price)
           price_month=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24 * 30.4, 2))" $price)
           echo "Server will cost \$$price_day/day & \$$price_month/month"
-      - name: Upload
-        run: aws s3 cp server s3://codabool-go/server # s3 cp will overwrite
+      # - name: Upload
+      #   run: aws s3 cp server s3://codabool-go/server # s3 cp will overwrite
       - uses: hashicorp/setup-packer@main
         with:
           version: "1.8.5" # https://releases.hashicorp.com/packer
