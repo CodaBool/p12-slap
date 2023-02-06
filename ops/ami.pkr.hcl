@@ -69,7 +69,7 @@ build {
       "sudo chmod 750 /tmp/agent.json",
       "sudo chown root:root /tmp/agent.json",
       "sudo cp /tmp/agent.json /opt/aws/agent.json",
-      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json"
+      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json",
       // "sudo cp / /opt/server",
       "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
       "sudo systemctl --now enable server",
