@@ -43,12 +43,22 @@ build {
     source = "server"
     destination = "/tmp/server"
   }
+  provisioner "file" {
+    source = "agent.json"
+    destination = "/tmp/agent.json"
+  }
   provisioner "shell" {
     // environment_vars = [
     //   "FOO=hello world",
     // ]
     inline = [
-      // "sudo yum update -y -q",
+      "sudo yum update -y -q",
+      "sudo yum remove docker-compose -y",
+      "sudo groupdel docker",
+      "sudo rm -rf /var/lib/docker /var/lib/containerd /etc/docker",
+      "sudo yum clean all",
+      "sudo yum makecache",
+      "sudo grubby --update-kernel=ALL --remove-args=\"systemd.unified_cgroup_hierarchy=0\"",
       // "sudo yum install git -y -q",
       // "sudo yum install golang -y -q",
       // "git clone https://github.com/CodaBool/p12-slap.git slap",
@@ -56,8 +66,12 @@ build {
       "sudo chmod 750 /tmp/server",
       "sudo chown root:root /tmp/server",
       "sudo cp /tmp/server /opt/server",
+      "sudo chmod 750 /tmp/agent.json",
+      "sudo chown root:root /tmp/agent.json",
+      "sudo cp /tmp/agent.json /opt/aws/agent.json",
+      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json"
       // "sudo cp / /opt/server",
-      "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\\nRestart=always\\nRestartSec=10s\\nExecStart=/opt/server\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
+      "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
       "sudo systemctl --now enable server",
       "printf \"\nalias reload='sudo systemctl daemon-reload'\nalias start='sudo systemctl start server'\nalias status='systemctl status server'\nalias restart='sudo systemctl restart server'\nalias stop='sudo systemctl stop server'\nalias logs='journalctl -f -u server'\n\" >> ~/.bashrc"
     ]
