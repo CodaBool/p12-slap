@@ -1,0 +1,73 @@
+/* Override Bootstrap Nav */
+.nav-link, .navbar-brand {
+  cursor: pointer;
+  font-size: 1.5rem !important;
+  margin: 0 4rem 0 4rem;
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: .3rem;
+  height: .3rem;
+  border-radius: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  border: 2px solid rgba(255, 255, 255, .8);
+  z-index: 1;
+}
+
+.ui {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28em;
+  height: 18em;
+  background-color: black;
+  opacity: .5;
+  /* border-radius: 0 2em 0 0;  BOTTOM-LEFT */
+  border-radius: 0 0 0 2em;
+  transition-property: height, width, opacity;
+  transition-duration: 150ms;
+}
+
+.ui-expanded {
+  height: 40em;
+  width: 30em;
+  opacity: 1;
+}
+
+/* Chat Room Messages */
+.myMsg {
+  background-image: linear-gradient(to left, rgb(0, 0, 0), rgb(30, 30, 30));
+  color: rgb(255, 255, 255);
+}
+.yourName {
+  color: #138E9E;
+}
+.otherName {
+  color: #1E74F5;
+}
+.otherMsg {
+  background-image: linear-gradient(to right, rgb(30, 30, 30), rgb(0, 0, 0));
+  color: rgb(255, 255, 255);
+}
+.messages {
+  /* height: 35em; */
+  overflow: auto;
+  color: rgb(255, 255, 255);
+  /* max-height: 35em; */
+  transition-property: height, width, opacity;
+}
+.messages-min {
+  height: 15em;
+  /* max-height: 35em; */
+}
+.messages-max {
+  height: 35em;
+  /* max-height: 35em; */
+}
+.chat {
+  border: 1px solid rgb(255, 255, 255);
+  color: #000000;
+}

@@ -24,12 +24,10 @@ jobs:
           SHA: ${{ toJSON(github.sha) }}
           RUN_NUMBER: ${{ toJSON(github.run_number) }}
       - uses: actions/setup-go@v3
-        if: "! contains(github.event.commits[0].message, '[no ami]')"
         with:
           go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
       - name: Build Binary
-        if: "! contains(github.event.commits[0].message, '[no ami]')"
-        run: GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ./op/server main.go
+        run: GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ./ops/server ./server/main.go
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
@@ -39,12 +37,10 @@ jobs:
       # - name: Upload
       #   run: aws s3 cp server s3://codabool-go/server # s3 cp will overwrite
       - uses: hashicorp/setup-packer@main
-        if: "! contains(github.event.commits[0].message, '[no ami]')"
         with:
           version: "1.8.5" # https://releases.hashicorp.com/packer
       - name: Packer
-        if: "! contains(github.event.commits[0].message, '[no ami]')"
-        working-directory: ./op
+        working-directory: ./ops
         run: |
           packer init .
           packer build -var="unique_ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.run }}" .
@@ -54,8 +50,7 @@ jobs:
         with:
           terraform_version: 1.3.7 # https://releases.hashicorp.com/terraform
       - name: terraform
-        working-directory: ./op
+        working-directory: ./ops
         run: |
           terraform init
           terraform apply -auto-approve -var="unique_ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.run }}"
-        # terraform plan -no-color
