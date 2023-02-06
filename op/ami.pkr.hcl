@@ -52,7 +52,7 @@ build {
       // "cd slap",
       "chmod 750 /tmp/server",
       "chmown root:root /tmp/server",
-      "sudo cp /tmp/server /opt/server"
+      "sudo cp /tmp/server /opt/server",
       // "sudo cp / /opt/server",
       "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\\nRestart=always\\nRestartSec=10s\\nExecStart=/opt/server\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
       "sudo systemctl --now enable server",
