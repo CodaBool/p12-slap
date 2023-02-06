@@ -17,6 +17,7 @@ module "ec2" {
   source   = "github.com/CodaBool/AWS/modules/ec2"
   ami_name = var.ami_name
   name     = "slap"
+  # price    = ""
   price    = data.external.lowest_price.result.price
 }
 
