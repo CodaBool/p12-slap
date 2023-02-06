@@ -36,7 +36,9 @@ jobs:
       - name: Pricing
         run: |
           price=$(aws --region=us-east-1 ec2 describe-spot-price-history --instance-types t4g.nano --start-time=$(date +%s) --product-descriptions="Linux/UNIX" --query 'SpotPriceHistory[*].{az:AvailabilityZone, price:SpotPrice}' | jq -r ".[] | select(.az == \"us-east-1a\") | .price")
-          print(f"server will cost ${str(float(price) * 24)}/day, ${str(float(price) * 24 * 30.4)}/month, and ${str(int(float(price) * 24 * 30.4 * 12))}/year")
+          price_day=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24, 2))" $price)
+          price_month=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24 * 30.4, 2))" $price)
+          echo "Server will cost \$$price_day/day & \$$price_month/month"
       # - name: Upload
       #   run: aws s3 cp server s3://codabool-go/server # s3 cp will overwrite
       # - uses: hashicorp/setup-packer@main
