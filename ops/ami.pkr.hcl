@@ -53,7 +53,7 @@ build {
     // ]
     inline = [
       "sudo yum update -y -q",
-      "sudo yum remove docker-compose -y",
+      "sudo yum remove docker -y",
       "sudo groupdel docker",
       "sudo yum clean all",
       "sudo yum makecache",
@@ -67,7 +67,7 @@ build {
       "sudo cp /tmp/server /opt/server",
       "sudo chmod 750 /tmp/agent.json",
       "sudo chown root:root /tmp/agent.json",
-      "sudo mkdir opt/aws",
+      "sudo mkdir /opt/aws",
       "sudo cp /tmp/agent.json /opt/aws/agent.json",
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json",
       // "sudo cp / /opt/server",
