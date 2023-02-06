@@ -29,6 +29,13 @@ output "price" {
   value = data.external.lowest_price.result.price
 }
 
+output "instance" {
+  value = module.instance
+}
+output "eip" {
+  value = module.eip
+}
+
 variable "ssh_ip" {
   type = string
 }
