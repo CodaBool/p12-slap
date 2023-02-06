@@ -15,9 +15,9 @@ terraform {
 # TODO: this could potentially raise the price
 module "ec2" {
   source   = "github.com/CodaBool/AWS/modules/ec2"
-  ami_name = var.ami_name
-  name     = "slap"
+  name     = "slap" # this must match what packer tag named the ami
   price    = "0.0017"
+  instance_type = "t4g.nano"
   # price    = data.external.lowest_price.result.price
 }
 
