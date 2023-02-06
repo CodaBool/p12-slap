@@ -54,4 +54,4 @@ jobs:
         working-directory: ./ops
         run: |
           terraform init
-          terraform apply -auto-approve -var="unique_ami_name=${{ steps.extract.outputs.repo }}-${{ steps.extract.outputs.run }}"
+          terraform apply -auto-approve -var="ssh_ip=${{ secrets.AZURE_CREDENTIALS }}"

@@ -18,6 +18,7 @@ module "ec2" {
   name     = "slap" # this must match what packer tag named the ami
   instance_type = "t4g.nano"
   price    = data.external.lowest_price.result.price
+  ssh_ip   = var.ssh_ip
 }
 
 data "external" "lowest_price" {
@@ -28,6 +29,6 @@ output "price" {
   value = data.external.lowest_price.result.price
 }
 
-variable "unique_ami_name" {
+variable "ssh_ip" {
   type = string
 }
