@@ -14,22 +14,20 @@ jobs:
       - name: Extract Pipline Vars
         run: |
           repo=${GITHUB_REPOSITORY#CodaBool/}
-          echo ${GITHUB_REF#refs/heads/}
-          echo ${repo,,}
+          build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
           echo "stage=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-          # echo "repo=${repo,,}" >> $GITHUB_STATE
-          # echo "stage=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
-          # build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
-          # echo "build=${build}" >> $GITHUB_STATE
-          # echo "run=${RUN_NUMBER}" >> $GITHUB_STATE
-        id: extract # allows use of ${{ steps.extract.outputs.stage }} for pipeline stage/repo
+          echo "run=${RUN_NUMBER}" >> $GITHUB_ENV
+          echo "repo=${repo,,}" >> $GITHUB_ENV
+          echo "build=${build}" >> $GITHUB_ENV
         env:
           SHA: ${{ toJSON(github.sha) }}
           RUN_NUMBER: ${{ toJSON(github.run_number) }}
       - name: check env
         run: |
           echo "${{ env.stage }}"
-          # echo "${{ steps.extract.outputs.action_state }}"
+          echo "${{ env.run }}"
+          echo "${{ env.repo }}"
+          echo "${{ env.build }}"
       # - uses: actions/setup-go@v3
       #   with:
       #     go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
