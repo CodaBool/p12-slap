@@ -49,6 +49,9 @@
 - [vr / ar](https://github.com/pmndrs/react-xr)
 
 # Packer
+### Logs
+- [config](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+
 > debug
 ```
 export PACKER_LOG_PATH="./packer.log"
@@ -59,6 +62,11 @@ packer build -debug .
 # Smart build
 - in order to only build front end I would need to split into a client server folder struct
   - then update in vercel the root folder
+- go build
+  - t4g runs on Arm-based 64 bit AWS Graviton2 processors
+  - change GOARCH if instead using an intel based cpu
+  - -ldflags="-s -w" strips ~1.3M unecessary info
+  - -x enables verbose building
 
 # Bugs
 - ~~[running in mount twice](https://stackoverflow.com/a/69076030/15428240)~~ this should be solved now
