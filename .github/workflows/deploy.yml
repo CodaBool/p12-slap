@@ -14,8 +14,9 @@ jobs:
       - name: Extract Pipline Vars
         run: |
           repo=${GITHUB_REPOSITORY#CodaBool/}
-          echo "action_state=test" >> $GITHUB_OUTPUT
-          echo "action_state_env=test_env" >> $GITHUB_ENV
+          echo ${GITHUB_REF#refs/heads/}
+          echo ${repo,,}
+          echo "stage=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
           # echo "repo=${repo,,}" >> $GITHUB_STATE
           # echo "stage=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
           # build=$(echo "${SHA:0:7}.${RUN_NUMBER}"|tr -d '"')
@@ -27,10 +28,8 @@ jobs:
           RUN_NUMBER: ${{ toJSON(github.run_number) }}
       - name: check env
         run: |
-          echo "${{ steps.extract.outputs }}"
-          echo "${{ env }}"
-          echo "${{ env.action_state_env }}"
-          echo "${{ steps.extract.outputs.action_state }}"
+          echo "${{ env.stage }}"
+          # echo "${{ steps.extract.outputs.action_state }}"
       # - uses: actions/setup-go@v3
       #   with:
       #     go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
