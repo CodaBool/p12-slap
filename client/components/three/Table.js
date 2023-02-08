@@ -2,7 +2,7 @@ import { useGLTF } from "@react-three/drei"
 import { RigidBody, CylinderCollider } from "@react-three/rapier"
 
 export default function Model() {
-  const { nodes, materials } = useGLTF("/assets/table.glb")
+  const { nodes, materials } = useGLTF("/table.glb")
   return (
     <RigidBody type="fixed" colliders={false}>
       <mesh
@@ -19,4 +19,4 @@ export default function Model() {
   )
 }
 
-useGLTF.preload("/assets/table.glb")
+useGLTF.preload("/table.glb")

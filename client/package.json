@@ -4,38 +4,30 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "export": "next build && next export",
-    "go": "nodemon --exec go run ../server/main.go --signal SIGTERM",
-    "start": "node server.js",
-    "dev": "concurrently \"next dev\" \"npm run go\"",
-    "client": "next dev"
+    "dev": "next dev",
+    "start": "next dev"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "^0.10.0",
-    "@react-three/cannon": "^6.5.0",
-    "@react-three/drei": "^9.46.0",
-    "@react-three/fiber": "^8.9.1",
-    "@react-three/rapier": "^0.11.0",
-    "axios": "^1.2.0",
+    "@dimforge/rapier3d-compat": "^0.11.1",
+    "@react-three/cannon": "^6.5.2",
+    "@react-three/drei": "^9.56.18",
+    "@react-three/fiber": "^8.11.0",
+    "@react-three/rapier": "^0.13.2",
     "bootstrap": "^5.2.3",
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "next": "13.0.6",
+    "next": "13.1.6",
     "react": "18.2.0",
-    "react-awesome-reveal": "^4.1.0",
-    "react-bootstrap": "^2.6.0",
+    "react-awesome-reveal": "^4.2.3",
+    "react-bootstrap": "^2.7.0",
     "react-bootstrap-icons": "^1.10.2",
     "react-dom": "18.2.0",
-    "socket.io": "^4.5.4",
-    "socket.io-client": "^4.5.4",
-    "three": "^0.147.0",
-    "three-stdlib": "^2.20.2",
-    "zustand": "^4.1.4"
+    "socket.io-client": "^4.6.0",
+    "three": "^0.149.0",
+    "three-stdlib": "^2.21.8",
+    "zustand": "^4.3.2"
   },
   "devDependencies": {
-    "concurrently": "^7.6.0",
-    "dotenv": "^16.0.3",
     "next-transpile-modules": "^10.0.0",
-    "nodemon": "^2.0.20"
+    "r3f-perf": "^7.1.1"
   }
 }

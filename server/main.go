@@ -497,6 +497,6 @@ func main() {
 
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/socket.io/", httpServer)
-	fmt.Println(http.ListenAndServe(":80", serveMux))
 	fmt.Println("🎧")
+	fmt.Println(http.ListenAndServe(":80", serveMux))
 }

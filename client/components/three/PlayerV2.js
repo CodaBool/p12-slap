@@ -16,7 +16,7 @@ const direction = new THREE.Vector3()
 const frontVector = new THREE.Vector3()
 const sideVector = new THREE.Vector3()
 
-useGLTF.preload("/assets/player.glb")
+useGLTF.preload("/player.glb")
 
 function OtherPlayer({ scene, position, color, id, animations, players, body }) {
   const { actions } = useAnimations(animations, scene)
@@ -102,7 +102,7 @@ export default function PlayerV2({ gameLoop, slap, players }) {
   const [locked, setLocked] = useState(false)
   const [currentChair, setCurrentChair] = useState()
   const [animate, setAnimate] = useState('Idle')
-  const { nodes, materials, animations, scene:object } = useGLTF("/assets/player.glb")
+  const { nodes, materials, animations, scene:object } = useGLTF("/player.glb")
   const myBody = useRef()
   const body1 = useRef()
   const body2 = useRef()
@@ -122,13 +122,13 @@ export default function PlayerV2({ gameLoop, slap, players }) {
   useEffect(() => {
     // MOUNT
     camera.rotation.set(0, Math.PI /2, 0)
-    // myScene.traverse(obj => {
-    //   if (obj.isMesh) {
-    //     // obj.material.color = new THREE.Color(color)
-    //     obj.frustumCulled = false // disable mesh disapear when close
-    //     obj.material = obj.material.clone()
-    //   }
-    // })
+    myScene.traverse(obj => {
+      if (obj.isMesh) {
+        // obj.material.color = new THREE.Color(color)
+        obj.frustumCulled = true // false = disable mesh disapear when close
+        obj.material = obj.material.clone()
+      }
+    })
 
     // SOCKETS
     socket.on('sit', data => {
@@ -371,7 +371,7 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     if (getAngle(currentAngle) !== lastAngle) {
       lastAngle = getAngle(currentAngle)
       // console.log('set angle to', lastAngle, 'convert', lastAngle * 100)
-      myBody?.current?.setRotation(myBody?.current?.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), lastAngle))
+      // myBody?.current?.setRotation(myBody?.current?.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), lastAngle))
     }
   })
 
@@ -390,10 +390,10 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         <primitive object={myScene} />
         <CuboidCollider args={[.32, .85, .32]} position={[0, .83, 0]} />
       </RigidBody>
-      <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
+      {/* <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
       <OtherPlayer position={[24,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} animations={animations} players={players} id={2} />
       <OtherPlayer position={[26,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} animations={animations} players={players} id={3} />
-      <OtherPlayer position={[26,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} />
+      <OtherPlayer position={[26,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} /> */}
       <Chairs h={handleChairClick} />
     </>
   )

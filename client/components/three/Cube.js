@@ -22,7 +22,7 @@ export default function Cube(props) {
   const ref = useRef()
   const [hover, set] = useState(null)
   // const addCube = useCubeStore((state) => state.addCube)
-  const texture = useTexture("/assets/dirt.jpg")
+  const texture = useTexture("/dirt.jpg")
   const onMove = useCallback((e) => {
     e.stopPropagation()
     set(Math.floor(e.faceIndex / 2))

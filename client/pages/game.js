@@ -2,7 +2,7 @@ import { Canvas, useThree, extend } from '@react-three/fiber'
 import { RenderPixelatedPass } from 'three-stdlib'
 import { useMemo, useEffect, Suspense, useState, useCallback, useReducer } from 'react'
 import * as THREE from 'three'
-import { socket, breakIntoParts, shuffleArr, copy } from '../constants'
+import { socket, breakIntoParts, shuffleArr, copy, cardNames } from '../constants'
 // import Cube from '../components/three/Cube'
 // import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
@@ -14,15 +14,16 @@ import  {CSS3DDemo } from '../components/three/Computer'
 import Ground from '../components/three/Ground'
 // import EnemyBasic from '../components/three/EnemyBasic'
 import { Physics, Debug } from "@react-three/rapier"
-import { Effects, Preload, PointerLockControls, KeyboardControls, Sky, Stats, stats  } from '@react-three/drei'
+import { Effects, Preload, PointerLockControls, KeyboardControls, Sky, Stats, stats } from '@react-three/drei'
 import { create } from 'zustand'
-import Cards, { dropCard, cardKeys } from '../components/three/Cards'
 import Button from '../components/three/Button'
+import Cards, { dropCard } from '../components/three/CardsV2'
 import { useRouter } from 'next/router'
 import assert from 'assert'
 import { uid } from './index'
 import TextMesh, { TurnText, PlayerText, CardInfo, Timer } from '../components/three/Text'
 import {Load} from '../components/Load'
+import { Perf } from 'r3f-perf'
 
 // https://codesandbox.io/s/pixelated-render-pass-forked-to503e?file=%2Fsrc%2FApp.js
 extend({ RenderPixelatedPass })
@@ -185,11 +186,11 @@ export default function index() {
     // deals cards
     // const evenlyDealt = breakIntoParts(cardKeys.length, players.length)
     const evenlyDealt = breakIntoParts(12, players.length)
-    shuffleArr(cardKeys)
+    shuffleArr(cardNames)
 
     evenlyDealt.forEach((size, i) => {
       for (const j in [...Array(size).keys()]) {
-        players[i].deck.push(cardKeys.shift())
+        players[i].deck.push(cardNames.shift())
       }
     })
 
@@ -531,7 +532,8 @@ export default function index() {
         ]}>
         <Suspense fallback={<Load />}>
           <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
-            <Stats showPanel={1} />
+            {/* <Stats showPanel={1} /> */}
+            {/* <Perf /> */}
             <Sky sunPosition={[100, 20, 100]} distance={5000} />
             {/* <color attach="background" args={['#000000']} /> */}
             <ambientLight intensity={.4} />
@@ -548,10 +550,10 @@ export default function index() {
                 {/* <PlayerBlue slap={slap} gameLoop={gameLoop} players={playersState} />
                 <PlayerRed slap={slap} gameLoop={gameLoop} players={playersState} /> */}
                 <Table />
+                <Cards />
                 {/* <TestModel /> */}
                 {/* <Crosshair /> */}
                 {/* <EnemyBasic /> */}
-                <Cards />
                 {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
                 <TextMesh position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
                 {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}

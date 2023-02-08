@@ -47,6 +47,10 @@
 - [cannon](https://github.com/pmndrs/use-cannon) alternative React physics. Just based on popularity I probably should be using this over Rapier but it might not matter.
 - [post processing](https://github.com/pmndrs/react-postprocessing) and [docs](https://docs.pmnd.rs/react-postprocessing/introduction)
 - [vr / ar](https://github.com/pmndrs/react-xr)
+- [progress bar guide](https://mc.dean.lsa.umich.edu/threejs/manual/en/textures.html)
+
+# Blog
+- [creating a texture atlas 4.1MB -> 37KB 111x reduction in assets](https://codesandbox.io/s/textureatlas-three-js-forked-q3n2gc?file=%2Fsrc%2Findex.js)
 
 # Packer
 ### Logs
@@ -73,6 +77,7 @@ packer build -debug .
 - (feature?) you will be able to slap on cards which are burned.
 - clicking start while seated attempts to also drop a card
 - will sit on "Joining game" in menu despite failed ws conn
+- holding control give null pointer
 
 # Compression
 MeshoptDecoder is already used in useGLTF loader

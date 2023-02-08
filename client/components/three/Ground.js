@@ -3,7 +3,7 @@ import { useTexture } from "@react-three/drei"
 import { CuboidCollider, RigidBody } from "@react-three/rapier"
 
 export default function Ground(props) {
-  const texture = useTexture("/assets/floor.jpg")
+  const texture = useTexture("/floor.jpg")
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping
   
   return (

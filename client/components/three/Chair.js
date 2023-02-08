@@ -6,7 +6,7 @@ import { useMemo } from "react"
 import * as THREE from "three"
 
 export default function Chairs({h}) {
-  const { scene, materials:sourceMaterials, nodes } = useGLTF("/assets/chair.glb")
+  const { scene, materials:sourceMaterials, nodes } = useGLTF("/chair.glb")
   const material1 = useMemo(() => sourceMaterials["Material.001"].clone(), [sourceMaterials])
   const material2 = useMemo(() => sourceMaterials["Material.001"].clone(), [sourceMaterials])
   const material3 = useMemo(() => sourceMaterials["Material.001"].clone(), [sourceMaterials])
@@ -55,4 +55,4 @@ function Chair({ rotation, position, nodes, materials, collider, collider2, id, 
   )
 }
 
-useGLTF.preload("/assets/chair.glb")
+useGLTF.preload("/chair.glb")

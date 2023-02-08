@@ -98,3 +98,83 @@ export function useDebounce(value, timeout) {
 
   return state
 }
+
+export class TextureAtlas {
+  constructor(json, texture) {
+    this.textures = {};
+
+    const { frames } = json;
+
+    Object.keys(frames).forEach((name) => {
+      const t = texture.clone();
+      const data = frames[name].frame;
+      t.repeat.set(data.w / texture.image.width, data.h / texture.image.height);
+      t.offset.x = data.x / texture.image.width;
+      t.offset.y =
+        1 - data.h / texture.image.height - data.y / texture.image.height;
+      t.needsUpdate = true;
+      t.name = name
+
+      this.textures[name] = t;
+    });
+  }
+
+  getTexture(name) {
+    return this.textures[name];
+  }
+}
+
+export const cardNames = [
+  "ad",
+  "ah",
+  "as",
+  "ac",
+  "2d",
+  "2h",
+  "2s",
+  "2c",
+  "3d",
+  "3h",
+  "3s",
+  "3c",
+  "4d",
+  "4h",
+  "4s",
+  "4c",
+  "5d",
+  "5h",
+  "5s",
+  "5c",
+  "6d",
+  "6h",
+  "6s",
+  "6c",
+  "7d",
+  "7h",
+  "7s",
+  "7c",
+  "8d",
+  "8h",
+  "8s",
+  "8c",
+  "9d",
+  "9h",
+  "9s",
+  "9c",
+  "1d",
+  "1h",
+  "1s",
+  "1c",
+  "jd",
+  "jh",
+  "js",
+  "jc",
+  "qd",
+  "qh",
+  "qs",
+  "qc",
+  "kd",
+  "kh",
+  "ks",
+  "kc"
+]

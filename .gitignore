@@ -2,7 +2,9 @@ node_modules/
 build/
 out/
 .next/
+.terraform/
+tmp/
 .env
 junk.*
-.terraform/
 .terraform.lock.hcl
+.air.toml
