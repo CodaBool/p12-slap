@@ -539,21 +539,11 @@ export default function index() {
             <ambientLight intensity={.4} />
             <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
             <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
-            <Physics gravity={[0, -2, 0]}>
-              {/* <Debug color="black" scale={1}> */}
+            <Physics colliders={false}>
                 <Ground />
-                {/* <PlayerComponent slap={slap} gameLoop={gameLoop} /> */}
                 <PlayersAndChairs slap={slap} gameLoop={gameLoop} players={playersState} />
-                {/* <AllOtherPlayers players={playersState} /> */}
-                {/* <OtherPlayer players={playersState} num={3} />
-                <OtherPlayer players={playersState} num={4} /> */}
-                {/* <PlayerBlue slap={slap} gameLoop={gameLoop} players={playersState} />
-                <PlayerRed slap={slap} gameLoop={gameLoop} players={playersState} /> */}
                 <Table />
                 <Cards />
-                {/* <TestModel /> */}
-                {/* <Crosshair /> */}
-                {/* <EnemyBasic /> */}
                 {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
                 <TextMesh position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
                 {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
@@ -570,7 +560,6 @@ export default function index() {
                 {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
                 {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
                 {/* <Button position={[-1.8, 2, 0]} action={() => console.log(players)} color="blue" /> */}
-              {/* </Debug> */}
             </Physics>
             <PointerLockControls />
             <Preload all />

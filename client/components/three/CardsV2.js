@@ -74,7 +74,7 @@ function CardComponent({texture, i, name}) {
   // texture.magFilter = THREE.NearestFilter;
   apiRefs.push({ref, name})
   return (
-    <RigidBody position={[1 * i,1,20]} ref={ref} colliders={false}>
+    <RigidBody position={[1 * i,1,100]} ref={ref} colliders={false}>
       <mesh>
         <boxGeometry args={[.5,.04,.7]} />
         <meshBasicMaterial attach="material-0" color="white" />
@@ -116,7 +116,7 @@ export default function CardsV2() {
     })
     socket.on('reset', () => {
       apiRefs.forEach((obj, i) => {
-        obj.ref.current.setTranslation({ x: 1 * i, y: 1, z: 150 }, true)
+        obj.ref.current.setTranslation({ x: 1 * i, y: 1, z: 250 }, true)
         obj.ref.current.setRotation({ w: 1, x: 0, y: 0, z: 0 }, true)
       })
     })

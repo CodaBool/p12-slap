@@ -2,7 +2,7 @@ import { useAnimations, useGLTF } from "@react-three/drei"
 import { useEffect, useRef, useState, useMemo } from "react"
 import { useKeyboardControls } from "@react-three/drei"
 import { useFrame, useThree } from "@react-three/fiber"
-import { RigidBody, useRapier, CapsuleCollider, CuboidCollider } from "@react-three/rapier"
+import {  useRapier, CapsuleCollider, CuboidCollider, RigidBody, quat, euler  } from "@react-three/rapier"
 import * as THREE from "three"
 // import * as RAPIER from "@dimforge/rapier3d-compat"
 import { socket } from '../../constants'
@@ -103,7 +103,7 @@ export default function PlayerV2({ gameLoop, slap, players }) {
   const [currentChair, setCurrentChair] = useState()
   const [animate, setAnimate] = useState('Idle')
   const { nodes, materials, animations, scene:object } = useGLTF("/player.glb")
-  const myBody = useRef()
+  const myBody = useRef(null)
   const body1 = useRef()
   const body2 = useRef()
   const body3 = useRef()
@@ -122,13 +122,13 @@ export default function PlayerV2({ gameLoop, slap, players }) {
   useEffect(() => {
     // MOUNT
     camera.rotation.set(0, Math.PI /2, 0)
-    myScene.traverse(obj => {
-      if (obj.isMesh) {
-        // obj.material.color = new THREE.Color(color)
-        obj.frustumCulled = true // false = disable mesh disapear when close
-        obj.material = obj.material.clone()
-      }
-    })
+    // myScene.traverse(obj => {
+    //   if (obj.isMesh) {
+    //     // obj.material.color = new THREE.Color(color)
+    //     obj.frustumCulled = false // disable mesh disapear when close
+    //     obj.material = obj.material.clone()
+    //   }
+    // })
 
     // SOCKETS
     socket.on('sit', data => {
@@ -136,24 +136,23 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     })
 
     socket.on('move', data => {
-
-      // console.log('rotation', data, 'parsed', data.rotation/100)
       if (data.order == 1) {
         body1.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
-        body1.current.setLinvel({ x: 0, y: 0, z: 0 })
-        body1.current.setRotation(body1.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
+        body1.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+        // body1.current.setRotation(body1.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
       } else if (data.order == 2) {
         body2.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
-        body2.current.setLinvel({ x: 0, y: 0, z: 0 })
-        body2.current.setRotation(body2.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
+        body2.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+        // body2.current.setRotation(euler(camera?.rotation), true)
+        // body2.current.setRotation(body2.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
       } else if (data.order == 3) {
         body3.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
-        body3.current.setLinvel({ x: 0, y: 0, z: 0 })
-        body3.current.setRotation(body3.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
+        body3.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+        // body3.current.setRotation(body3.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
       } else if (data.order == 4) {
         body4.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
-        body4.current.setLinvel({ x: 0, y: 0, z: 0 })
-        body4.current.setRotation(body4.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
+        body4.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+        // body4.current.setRotation(body4.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
       }
     })
     return () => {
@@ -333,9 +332,10 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
   let lastAngle = null
   useFrame((state, delta) => {
+    // console.log(locked || !myBody?.current)
     if (locked || !myBody?.current) return
     const { forward, backward, left, right, jump, run } = get()
-    const velocity = myBody.current.linvel()
+    // const velocity = myBody.current.linvel()
     if (forward || backward || left || right) {
       if (run) {
         setAnimate('Run')
@@ -360,19 +360,28 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     frontVector.set(0, 0, backward - forward)
     sideVector.set(left - right, 0, 0)
     direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(run?2*SPEED:SPEED).applyEuler(camera.rotation)
-
+    // console.log(direction.x, velocity.y, direction.z)
     // if (direction.x > 1 || velocity.current[1] > 1 || direction.z > 1)
-    myBody.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
+    // console.log('rigid', { x: direction.x, y: velocity.y, z: direction.z })
+    // myBody.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
+    // myBody.current.applyImpulse({ x: direction.x, y: velocity.y, z: direction.z }, true)
+    myBody.current.setLinvel({x: direction.x, y: 0, z: direction.z}, true)
     // ref.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
     // jumping
     // const ray = rapier.world.raw().castRay(new RAPIER.Ray(body.current.translation(), { x: 0, y: -1, z: 0 }))
     // if (jump && ray && ray.collider && Math.abs(ray.toi) <= 1.75) body.current.setLinvel({ x: 0, y: 3, z: 0 })
 
-    if (getAngle(currentAngle) !== lastAngle) {
-      lastAngle = getAngle(currentAngle)
-      // console.log('set angle to', lastAngle, 'convert', lastAngle * 100)
+    // console.log('euler', euler(camera?.rotation))
+    // if (getAngle(currentAngle) !== lastAngle) {
+      // lastAngle = getAngle(currentAngle)
+      // const eu = euler(camera?.rotation)
+      // console.log('lastAngle', lastAngle, 'current', myBody?.current?.rotation())
+
+      // myBody?.current?.setRotation()
+      // const quaternion = quat(myBody.current.rotation())
+      // myBody?.current?.setRotation(euler(camera?.rotation), true)
       // myBody?.current?.setRotation(myBody?.current?.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), lastAngle))
-    }
+    // }
   })
 
   return (
@@ -387,13 +396,13 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         scale={2}
         mass={10}
       >
-        <primitive object={myScene} />
+        {/* <primitive object={myScene} /> */}
         <CuboidCollider args={[.32, .85, .32]} position={[0, .83, 0]} />
       </RigidBody>
-      {/* <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
+      <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
       <OtherPlayer position={[24,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} animations={animations} players={players} id={2} />
       <OtherPlayer position={[26,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} animations={animations} players={players} id={3} />
-      <OtherPlayer position={[26,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} /> */}
+      <OtherPlayer position={[26,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} />
       <Chairs h={handleChairClick} />
     </>
   )

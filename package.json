@@ -1,0 +1,24 @@
+{
+  "name": "0",
+  "version": "1.0.0",
+  "description": "- [sandbox](https://codesandbox.io/s/vkgi6?file=%2Fsrc%2FGround.js%3A355-372)\r - [basic](https://replit.com/talk/share/Simple-multiplayer-3D-FPS-using-Threejs/120692)\r - [threejs rapier](https://github.com/isaac-mason/sketches/tree/main/src/sketches/sketch-Rapier-RaycastVehicle)\r - [follow mouse](https://codepen.io/kylewetton/pen/WNNeyWJ)\r - [voxel socket fps with ai](https://github.com/Eric-Gurt/StarDefenders3D)\r - [reload animation](https://github.com/mohsenheydari/three-fps)\r - [threejs fps](https://github.com/mrdoob/three.js/blob/dev/examples/games_fps.html)",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"cd client && npm start\" \"nodemon --exec go run .\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodaBool/p12-slap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CodaBool/p12-slap/issues"
+  },
+  "homepage": "https://github.com/CodaBool/p12-slap#readme",
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "nodemon": "^2.0.20"
+  }
+}

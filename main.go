@@ -343,6 +343,7 @@ func main() {
 			var message Message
 			err := ms.Decode(msg[0], &message)
 			check(err)
+			log.Print("chat")
 			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
 
@@ -495,8 +496,8 @@ func main() {
 		})
 	})
 
-	serveMux := http.NewServeMux()
-	serveMux.Handle("/socket.io/", httpServer)
-	fmt.Println("🎧")
-	fmt.Println(http.ListenAndServe(":80", serveMux))
+	mux := http.NewServeMux()
+	mux.Handle("/socket.io/", httpServer)
+	log.Info().Msg("🎧")
+	log.Print(http.ListenAndServe(":80", mux))
 }
