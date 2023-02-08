@@ -77,7 +77,9 @@ packer build -debug .
 - (feature?) you will be able to slap on cards which are burned.
 - clicking start while seated attempts to also drop a card
 - will sit on "Joining game" in menu despite failed ws conn
-- holding control give null pointer
+- holding control gives null ref
+- using npm i -f for the peer depend on latest rapier (rm this in Vercel)
+- got a card is undefined when playing for over 5 minutes, and 5+ games
 
 # Compression
 MeshoptDecoder is already used in useGLTF loader
@@ -87,8 +89,9 @@ however, it is out of date, you can check the date on it [here](https://github.c
 compared to the newer decoder [here](https://github.com/zeux/meshoptimizer/blob/master/js/meshopt_decoder.js)
 
 # Other
-- empty namespaces will timeout after 45s
+- NOTE: empty namespaces will timeout after 45s
 - consider changing opening chat to Enter
+- would be nice to only drop cards if looking at table 
 
 # Go Migration notes
 ## Efficiency

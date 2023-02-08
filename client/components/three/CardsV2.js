@@ -91,6 +91,7 @@ function CardComponent({texture, i, name}) {
 
 export function dropCard(key, type) {
   const card = apiRefs.find(obj => obj.name === key)
+  console.log('drop',  key, card, apiRefs.length)
   if (type.includes('Burn')) {
     if (type == "secondBurn") {
       card.ref.current.setTranslation({ x: 1, y: 4, z: 0 }, true)

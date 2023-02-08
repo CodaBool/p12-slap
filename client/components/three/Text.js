@@ -134,6 +134,7 @@ export function CardInfo({ stack }) {
   const [text, setText] = useState()
      
   useEffect(() => {
+    if (!stack) return
     let txt = ""
     for (const s of stack) {
       txt += s + '\n'

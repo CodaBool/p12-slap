@@ -343,7 +343,6 @@ func main() {
 			var message Message
 			err := ms.Decode(msg[0], &message)
 			check(err)
-			log.Print("chat")
 			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
 
@@ -428,10 +427,13 @@ func main() {
 				players[player.Id] = player
 			}
 			if result.State == "win" {
-				log.Print("win, sending reset")
 				io.Sockets().To(server.Room(rkey)).Emit("reset")
-				// socket.Broadcast().To(server.Room(rkey)).Emit("reset")
 			}
+			if result.State == "end" {
+				io.Sockets().To(server.Room(rkey)).Emit("reset")
+				socket.Broadcast().To(server.Room(rkey)).Emit("status", "ready")
+			}
+			// log.Print("update", data)
 			socket.Broadcast().To(server.Room(rkey)).Emit("update", result)
 		})
 

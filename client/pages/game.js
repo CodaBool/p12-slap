@@ -204,6 +204,10 @@ export default function index() {
     socket.emit('update', { players, stack: [], state:'start' })
   }
   
+  // logic fails
+  // - left played a jack, right played last card and failed duel
+  // - success slap by person out of cards failed to winStack
+  // - failed to set status to ready after duel was won where loser dropped last card for last duel chance
   function gameLoop() {
     const me = players.find(p => p.uid == uid)
     // TODO: deliver a message whenever returning
@@ -303,7 +307,33 @@ export default function index() {
     // const tempStack = Array.from(stack)
     // tempStack.push(me.deck[0]) // push is mutable
 
+    // possible end state check, prev player played their last extended face
+    const withCardsBeforeDrop = players.filter(p => p.deck.length)
+    if (withCardsBeforeDrop.length === 1) {
+      console.log('deck before shift', me.deck)
+      me.deck.shift()
+      console.log('deck after shift', me.deck)
+      setStatus('froze')
+      socket.emit('status', 'froze')
+      setCountdown(true)
+
+      // update stack everywhere
+      // got a weird behavior where this update did not emit
+      // when the loser played last and the opponent had just put down Ace
+      socket.emit('update', { players, stack })
+
+      setTimeout(stack => {
+        console.log('extended face replaced with last player duel')
+        endGame(withCardsBeforeDrop[0].uid)
+      }, 5000, stack)
+
+      return
+    }
+
     // remove index 0 card
+    // TODO: should see if 'me' is possible here
+
+
     for (const i in players) {
       if (players[i].uid == uid) {
 
@@ -363,21 +393,30 @@ export default function index() {
 
             setTimeout(stack => {
               console.log('triggered end game because you played your last card')
-              endGame(withCards[0].id)
+              endGame(withCards[0].uid)
             }, 5000, stack)
 
             return
           }
-  
-          // set next turn
-          console.log('withCards', withCards)
+          
+          // TODO: there is a new player prop called 'order'. This could be used for
+          // deciding turn order
+          // NOTE: changing the withCards array will update players array
           let index = withCards.findIndex(p => p.turn == true)
-          console.log('player turn index', index)
-          players[index].turn = false
-          if (index == withCards.length - 1) {
-            index = -1
+          if (index === -1) {
+            // played last card
+            players[i].turn = false
+          } else {
+            withCards[index].turn = false
           }
-          players[index + 1].turn = true
+          if (withCards.length == 1) {
+            withCards[0].turn = true 
+          } else {
+            if (index == withCards.length - 1) {
+              index = -1
+            }
+            players[index + 1].turn = true
+          }
         }
       }
     }
@@ -453,7 +492,7 @@ export default function index() {
           const withCards = players.filter(p => p.deck.length)
           if (withCards.length < 2) {
             console.log('triggering end game due to bad slap')
-            endGame(withCards[0].id)
+            endGame(withCards[0].uid)
             return
           }
 
@@ -477,10 +516,11 @@ export default function index() {
   function endGame(winnerID) {
     // check if someone did a successful slap
     const withCards = players.filter(p => p.deck.length)
+    console.log('end check, players with cards', withCards)
     if (withCards.length > 1) return
-
+    
     for (const i in players) {
-      if (players[i].id == winnerID) {
+      if (players[i].uid == winnerID) {
         setErrMsg(players[i].name + ' has won!')
         messageAll(players[i].name + ' has won!')
       }
@@ -489,12 +529,13 @@ export default function index() {
     }
     stack = []
     setStatus('ready')
-    socket.emit('update', { players, stack, state: 'win' })
+    socket.emit('update', { players, stack, state: 'end' })
   }
 
   function winStack(winnerUID, type) {
 
-    // TODO: should do a better check on if a good slap happened
+    // TODO: do a better check on if a slap stole the pile
+    // this check will not work if the goes goes too fast
     if (type == 'duel') {
       if (stack.length < 2) {
         console.log('duel stolen')
@@ -502,9 +543,15 @@ export default function index() {
       }
     }
 
+    // check for game end
+    // console.log('checking end state after a stack was won', winnerUID)
+    endGame(winnerUID) // does internal check to see if true
+
     // remove whoever had turn before
     let index = players.findIndex(p => p.turn == true)
-    players[index].turn = false
+    if (index !== -1) {
+      players[index].turn = false
+    }
 
     for (const i in players) {
       if (players[i].uid == winnerUID) {
@@ -539,7 +586,7 @@ export default function index() {
             <ambientLight intensity={.4} />
             <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
             <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
-            <Physics colliders={false}>
+            <Physics colliders={false} gravity={[0,-1,0]}>
                 <Ground />
                 <PlayersAndChairs slap={slap} gameLoop={gameLoop} players={playersState} />
                 <Table />
@@ -551,7 +598,7 @@ export default function index() {
                 <TextMesh position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
                 <TurnText players={playersState} />
                 <Timer />
-                {/* <CardInfo stack={stackState} /> */}
+                <CardInfo stack={stackState} />
                 <PlayerText players={playersState} />
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
