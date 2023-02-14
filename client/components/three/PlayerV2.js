@@ -19,8 +19,6 @@ const sideVector = new THREE.Vector3()
 useGLTF.preload("/player.glb")
 
 function OtherPlayer({ scene, position, color, id, animations, players, body }) {
-  const { actions } = useAnimations(animations, scene)
-  const [animate, setAnimate] = useState('Idle')
   // const body = useRef()
   const direction = new THREE.Vector3()
   const frontVector = new THREE.Vector3()
@@ -37,13 +35,6 @@ function OtherPlayer({ scene, position, color, id, animations, players, body }) 
       }
     })
   }, [])
-
-  useEffect(() => {
-    actions[animate].reset().fadeIn(0.1).play()
-    return () => {
-      actions[animate].fadeOut(0.5)
-    }
-  }, [animate])
 
   let smallDif = .01 // .3+
   let dif = .1 // .3+
@@ -96,82 +87,158 @@ function OtherPlayer({ scene, position, color, id, animations, players, body }) 
 }
 
 let order = 0
+let lastAnimation = ['Idle', 'Idle', 'Idle', 'Idle']
+let myAnimation = 'Idle'
+let cameraRotation = 0
+let locked = false
+let vector = new THREE.Vector3()
 
 export default function PlayerV2({ gameLoop, slap, players }) {
   const [, get] = useKeyboardControls()
-  const [locked, setLocked] = useState(false)
+  // const [locked, setLocked] = useState(false)
   const [currentChair, setCurrentChair] = useState()
-  const [animate, setAnimate] = useState('Idle')
-  const { nodes, materials, animations, scene:object } = useGLTF("/player.glb")
+  // const [animate, setAnimate] = useState('Idle')
+  const [lastPos, setLastPos] = useState([8,0,0])
+  const { animations, scene:object } = useGLTF("/player.glb")
   const myBody = useRef(null)
   const body1 = useRef()
   const body2 = useRef()
   const body3 = useRef()
   const body4 = useRef()
   // const rapier = useRapier()
-  const { scene, camera } = useThree()
-  const myScene = useMemo(() => SkeletonUtils.clone(object), [object])
+  const { camera } = useThree()
   const scene1 = useMemo(() => SkeletonUtils.clone(object), [object])
   const scene2 = useMemo(() => SkeletonUtils.clone(object), [object])
   const scene3 = useMemo(() => SkeletonUtils.clone(object), [object])
   const scene4 = useMemo(() => SkeletonUtils.clone(object), [object])
-  const { actions } = useAnimations(animations, myScene)
-  const [lastPos, setLastPos] = useState([8,0])
-  let currentAngle = null
-
+  const { actions:actions1 } = useAnimations(animations, scene1)
+  const { actions:actions2 } = useAnimations(animations, scene2)
+  const { actions:actions3 } = useAnimations(animations, scene3)
+  const { actions:actions4 } = useAnimations(animations, scene4)
+  
   useEffect(() => {
     // MOUNT
     camera.rotation.set(0, Math.PI /2, 0)
-    // myScene.traverse(obj => {
-    //   if (obj.isMesh) {
-    //     // obj.material.color = new THREE.Color(color)
-    //     obj.frustumCulled = false // disable mesh disapear when close
-    //     obj.material = obj.material.clone()
-    //   }
-    // })
+    actions1['Idle'].play()
+    actions2['Idle'].play()
+    actions3['Idle'].play()
+    actions4['Idle'].play()
 
     // SOCKETS
-    socket.on('sit', data => {
-      console.log('someone else sate', data)
+    socket.on('chair', data => {
+      changeOtherChair(data[0], data[1], data[2])
+    })
+
+    socket.on('animation', data => {
+      // order, action
+      // const [a, sc, act] = getRefFromOrder(data[1])
+      // console.log('play', data[0])
+      // TODO: dry this
+      if (data[1] === 1) {
+        actions1['Slap'].stop()
+        actions1['Sit'].stop()
+        actions1['Idle'].stop()
+        actions1['Run'].stop()
+        actions1['Walk'].stop()
+        lastAnimation[0] = data[0]
+        if (data[0] === 'Slap') {
+          actions1['Sit'].play()
+          actions1['Slap'].fadeIn(.1).play()
+          setTimeout(() => {
+            actions1['Slap'].fadeOut(.3).play()
+          }, 150)
+        } else {
+          actions1[data[0]].play()
+        }
+      } else if (data[1] === 2) {
+        actions2['Slap'].stop()
+        actions2['Sit'].stop()
+        actions2['Idle'].stop()
+        actions2['Run'].stop()
+        actions2['Walk'].stop()
+        lastAnimation[1] = data[0]
+        if (data[0] === 'Slap') {
+          actions2['Sit'].play()
+          actions2['Slap'].stop().fadeIn(.1).play()
+          setTimeout(() => {
+            actions2['Slap'].fadeOut(.3).play()
+          }, 150)
+        } else {
+          actions2[data[0]].play()
+        }
+      } else if (data[1] === 3) {
+        actions3['Slap'].stop()
+        actions3['Sit'].stop()
+        actions3['Idle'].stop()
+        actions3['Run'].stop()
+        actions3['Walk'].stop()
+        lastAnimation[2] = data[0]
+        if (data[0] === 'Slap') {
+          actions3['Sit'].play()
+          actions3['Slap'].stop().fadeIn(.1).play()
+          setTimeout(() => {
+            actions3['Slap'].fadeOut(.3).play()
+          }, 150)
+        } else {
+          actions3[data[0]].play()
+        }
+      } else if (data[1] === 4) {
+        actions4['Slap'].stop()
+        actions4['Sit'].stop()
+        actions4['Idle'].stop()
+        actions4['Run'].stop()
+        actions4['Walk'].stop()
+        lastAnimation[3] = data[0]
+        if (data[0] === 'Slap') {
+          actions4['Sit'].play()
+          actions4['Slap'].stop().fadeIn(.1).play()
+          setTimeout(() => {
+            actions4['Slap'].fadeOut(.3).play()
+          }, 150)
+        } else {
+          actions4[data[0]].play()
+        }
+      }
     })
 
     socket.on('move', data => {
-      if (data.order == 1) {
+      // const [a, b, act] = getRefFromOrder(data[1])
+      if (data.order === 1) {
         body1.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
         body1.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        // body1.current.setRotation(body1.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
-      } else if (data.order == 2) {
+        scene1.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
+      } else if (data.order === 2) {
         body2.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
         body2.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        // body2.current.setRotation(euler(camera?.rotation), true)
-        // body2.current.setRotation(body2.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
-      } else if (data.order == 3) {
+        scene2.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
+      } else if (data.order === 3) {
         body3.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
         body3.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        // body3.current.setRotation(body3.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
-      } else if (data.order == 4) {
+        scene3.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
+      } else if (data.order === 4) {
         body4.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
         body4.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        // body4.current.setRotation(body4.current.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100))
+        scene4.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
       }
     })
     return () => {
-      socket.off('sit')
+      socket.off('animation')
+      socket.off('chair')
       socket.off('move')
     }
   }, [])
 
   useEffect(() => {
     if (!players?.length || order) return
-    const me = players?.find(p => p.uid == uid)
-    console.log('initializing myself as player number', me.order)
-    if (me.order == 1) {
+    const me = players?.find(p => p.uid === uid)
+    // console.log('initializing myself as player number', me.order)
+    if (me.order === 1) {
       myBody.current.setTranslation({ x: 4, y: .04, z: 5 }, true)
-    } else if (me.order == 2) {
+    } else if (me.order === 2) {
       myBody.current.setTranslation({ x: -6, y: .04, z: 5 }, true)
-    } else if (me.order == 3) {
+    } else if (me.order === 3) {
       myBody.current.setTranslation({ x: 8, y: .04, z: -5 }, true)
-    } else if (me.order == 4) {
+    } else if (me.order === 4) {
       myBody.current.setTranslation({ x: -10, y: .04, z: -5 }, true)
     }
     order = me.order
@@ -179,34 +246,19 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.abs(lastPos[0] - myBody.current.translation().x) > .5 || Math.abs(lastPos[1] - myBody.current.translation().z) > .5) {
-        // console.log('sending', [Math.floor(body.current.translation().x * 100), Math.floor(body.current.translation().z * 100), uid])
-        
-        // yes I can get the current order here
-        // TODO: figure out why I wanted the order here
-        // console.log('can i get an updated init', order)
-
-        setLastPos([myBody.current.translation().x, myBody.current.translation().z])
+      if (locked) return
+      camera.getWorldDirection( vector )
+      cameraRotation = (Math.atan2(vector.z,vector.x)+1.6) * (-1)
+      if (Math.abs(lastPos[0] - myBody.current.translation().x) > .5 || Math.abs(lastPos[1] - myBody.current.translation().z) > .5 || Math.floor(cameraRotation) !== lastPos[2]) {
+        setLastPos([myBody.current.translation().x, myBody.current.translation().z, Math.floor(cameraRotation)])
         // using int8 in backend means this can be max -128 to 127
         // using int16 in backend means this can be max -32,768 to 32,767
-        // seems like no matter what a float64 will be sent over
-
-        // console.log('angle?', getAngle(currentAngle))
-
-        // console.log('sending angle', Math.floor(getAngle(currentAngle) * 100))
-
-        socket.emit('move', [Math.floor(myBody.current.translation().x * 100), Math.floor(myBody.current.translation().z * 100), Math.floor(getAngle(currentAngle) * 100), uid, order])
+        // int16 seems to make sense
+        socket.emit('move', [Math.floor(myBody.current.translation().x * 100), Math.floor(myBody.current.translation().z * 100), cameraRotation*100, uid, order])
       }
     }, 100)
     return () => clearInterval(interval)
-  }, [lastPos])
-
-  useEffect(() => {
-    actions[animate].reset().fadeIn(0.1).play()
-    return () => {
-      actions[animate].fadeOut(0.5)
-    }
-  }, [animate])
+  }, [lastPos, locked])
 
   useEffect(() => {
     window.addEventListener("mousedown", mouseEvent)
@@ -219,131 +271,166 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
   function keyEvent(e) {
     if (e.key === " ") {
-      if (locked) slap()
+      if (locked && order > 0) {
+        // TODO: only do this when looking at table
+        slap()
+        socket.emit('animation', ['Slap', order])
+      }
     }
   }
 
-  function changeChair(desiredState, chair) {
-    let devOffset = 0
-    if (false) {
-      devOffset = 3
+  function getRefFromOrder(order) {
+    if (order === 1) {
+      return [body1?.current, scene1, actions1]
+    } else if (order === 2) {
+      return [body2?.current, scene2, actions2]
+    } else if (order === 3) {
+      return [body3?.current, scene3, actions3]
+    } else if (order === 4) {
+      return [body4?.current, scene4, actions4]
     }
-    if (!chair) {
-      console.log('reset')
-      myBody.current.setTranslation({ x: 2.8, y: -.5, z: 0 }, true)
-      myBody.current.setRotation({ w: 1, x: 0, y: Math.PI/3, z: 0 }, true)
-      socket.emit('stand', 1)
-      setLocked(false)
-      myBody.current.lockTranslations(false, true)
-      myBody.current.setEnabledTranslations(true, true, true, true)
+  }
+
+  function changeOtherChair(desiredState, chair, order) {
+    const [hitbox, model, act] = getRefFromOrder(order)
+    if (!hitbox || !model || !act) {
+      console.error('failed to get props for player', order)
       return
     }
     if (desiredState === 'sit') {
-      // console.log('sitting in chair', chair)
-      if (chair == 4) {
+      if (chair === 1) {
+        hitbox.setTranslation({ x: 0, y: .2, z: 2.8 }, true)
+        hitbox.lockTranslations(true, true)
+        model.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.03)
+      } else if (chair === 2) {
+        hitbox.setTranslation({ x: 0, y: .2, z: -2.8 }, true)
+        hitbox.lockTranslations(true, true)
+        model.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), -3.17)
+      } else if (chair === 3) {
+        hitbox.setTranslation({ x: -2.8, y: .2, z: 0 }, true)
+        hitbox.lockTranslations(true, true)
+        model.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), -1.6)
+      } else if (chair === 4) {
+        hitbox.setTranslation({ x: 2.8, y: .2, z: 0 }, true)
+        hitbox.lockTranslations(true, true)
+        model.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), 1.6)
+      }
+    } else {
+      if (chair === 1) {
+        hitbox.setTranslation({ x: 1.8, y: -.5, z: 2.8 }, true)
+        hitbox.lockTranslations(false, true)
+        hitbox.setEnabledTranslations(true, true, true, true)
+      } else if (chair === 2) {
+        hitbox.setTranslation({ x: -2.8, y: -.5, z: -2.8 }, true)
+        hitbox.lockTranslations(false, true)
+        hitbox.setEnabledTranslations(true, true, true, true)
+      } else if (chair === 3) {
+        hitbox.setTranslation({ x: -2.8, y: -.5, z: 2.8 }, true)
+        hitbox.lockTranslations(false, true)
+        hitbox.setEnabledTranslations(true, true, true, true)
+      } else if (chair === 4) {
+        hitbox.setTranslation({ x: 2.8, y: -.5, z: -2 }, true)
+        hitbox.lockTranslations(false, true)
+        hitbox.setEnabledTranslations(true, true, true, true)
+      }
+    }
+  }
+
+  function changeMyChair(desiredState, chair, order) {
+    // console.log('change chair', locked, 'chair', chair, 'order', order)
+    if (!chair || order === 0) {
+      console.error('reset')
+      myBody.current.setTranslation({ x: 2.8, y: -.5, z: 0 }, true)
+      myBody.current.lockTranslations(false, true)
+      myBody.current.setEnabledTranslations(true, true, true, true)
+      locked = false
+      return
+    }
+    if (desiredState === 'sit') {
+      if (chair === 4) {
         myBody.current.setTranslation({ x: 2.8, y: 0, z: 0 }, true)
-        myBody.current.setRotation({ w: 1, x: 0, y: Math.PI/3, z: 0 }, true)
-        camera.position.set(2.8+devOffset, 3.8+devOffset, 0)
-        // camera.rotation.set(-1.5, Math.PI/2, 1.5)
+        camera.position.set(2.8, 3.8, 0)
         camera.rotation.set(-1.5737, 0.96879, 1.57432)
-      } else if (chair == 3) {
+      } else if (chair === 3) {
         myBody.current.setTranslation({ x: -2.8, y: 0, z: 0 }, true)
-        myBody.current.setRotation({ w: 1, x: 0, y: -Math.PI/3, z: 0 }, true)
-        camera.position.set(-2.8, 3.8+devOffset, 0+devOffset)
-        // camera.rotation.set(0, -Math.PI/2, 0)
+        camera.position.set(-2.8, 3.8, 0)
         camera.rotation.set(-1.5707, -0.9547, -1.5707)
-      } else if (chair == 2) {
+      } else if (chair === 2) {
         myBody.current.setTranslation({ x: 0, y: 0, z: -2.8 }, true)
-        myBody.current.setRotation({ w: 1, x: 0, y: 1, z: 0 }, true)
-        camera.position.set(0, 3.8+devOffset, -2.8+devOffset)
+        camera.position.set(0, 3.8, -2.8)
         camera.rotation.set(.6, Math.PI, 0)
-      } else if (chair == 1) {
+      } else if (chair === 1) {
         myBody.current.setTranslation({ x: 0, y: 0, z: 2.8 }, true)
-        myBody.current.setRotation({ w: 1, x: 0, y: 0, z: 0 }, true)
-        camera.position.set(0, 3.8+devOffset, 2.8+devOffset)
+        camera.position.set(0, 3.8, 2.8)
         camera.rotation.set(-.6, 0, 0)
       }
       setCurrentChair(chair)
-      setLocked(true)
-      setAnimate('Sit')
-      socket.emit('sit', chair)
+      myAnimation = 'Sit'
+      // socket.emit('animation', ['Sit', order])
+      socket.emit('chair', ['sit', chair, order])
       myBody.current.lockTranslations(true, true)
+      locked = true
     } else {
-      // console.log('standing from chair', chair)
-      if (chair == 4) {
+      if (chair === 4) {
         myBody.current.setTranslation({ x: 2.8, y: -.5, z: -2 }, true)
-      } else if (chair == 3) {
+      } else if (chair === 3) {
         myBody.current.setTranslation({ x: -2.8, y: -.5, z: 2.8 }, true)
-      } else if (chair == 2) {
+      } else if (chair === 2) {
         myBody.current.setTranslation({ x: -2.8, y: -.5, z: -2.8 }, true)
-      } else if (chair == 1) {
+      } else if (chair === 1) {
         myBody.current.setTranslation({ x: 1.8, y: -.5, z: 2.8 }, true)
       }
       setCurrentChair(null)
-      setLocked(false)
-      setAnimate('Idle')
+      myAnimation = 'Idle'
+      // socket.emit('animation', ['Idle', order])
       myBody.current.lockTranslations(false, true)
       myBody.current.setEnabledTranslations(true, true, true, true)
-      socket.emit('stand', chair)
+      socket.emit('chair', ['stand', chair, order])
+      locked = false
     }
   }
 
   function handleChairClick(e, id) {
-    if (e.button == 2) {
+    if (e.button === 2) {
       if (locked) return
-      changeChair('sit', id)
+      changeMyChair('sit', Number(id), Number(order))
     }
   }
 
   function mouseEvent(e) {
     if (e.buttons === 2) { // RMB
-      
-      // console.log('RMB | locked =', locked, currentChair)
-      if (!locked) return
-      changeChair('stand', currentChair)
+      if (!locked || !currentChair) return
+      changeMyChair('stand', currentChair, Number(order))
       let size = 1
       // stack.forEach(() => size++)
       camera.position.set(0, 3.7 + (size * .05), .7)
       camera.rotation.set(-Math.PI /2.5, 0, 0)
     } else if (e.buttons === 1) { // LMB
       if (locked) {
-        setAnimate('Slap')
-        // should this be debounced?
-        setTimeout(() => {
-          setAnimate('Sit')
-        }, 500)
+        socket.emit('animation', ['Slap', order])
         gameLoop()
       }
     }
   }
-
-  function getAngle(angleVar) {
-    if (camera.rotation._y > 1) {
-      angleVar = Math.PI / 2 // 1.57
-    } else if (camera.rotation._y < -1) {
-      angleVar = -Math.PI / 2 // -1.57
-    } else if (Math.abs(camera.rotation._x) >= 3 || Math.abs(camera.rotation._z) >= 3) {
-      angleVar = Math.PI // 3.14
-    } else {
-      angleVar = -Math.PI * 2 // -6.28
-    }
-    return angleVar
-  }
-
-  let lastAngle = null
+  
+  let latestAnim
   useFrame((state, delta) => {
-    // console.log(locked || !myBody?.current)
     if (locked || !myBody?.current) return
     const { forward, backward, left, right, jump, run } = get()
     // const velocity = myBody.current.linvel()
     if (forward || backward || left || right) {
       if (run) {
-        setAnimate('Run')
+        latestAnim = 'Run'
       } else {
-        setAnimate('Walk')
+        latestAnim = 'Walk'
       }
     } else {
-      setAnimate('Idle')
+      latestAnim = 'Idle'
+    }
+
+    if (latestAnim !== myAnimation) {
+      myAnimation = latestAnim
+      socket.emit('animation', [latestAnim, order])
     }
     // if (jump) action = "TPost"
 
@@ -356,32 +443,19 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     // }
 
     // camera.position.set(myBody.current.translation().x-4, myBody.current.translation().y+10, myBody.current.translation().z-4)
-    camera.position.set(myBody.current.translation().x, myBody.current.translation().y+3.2, myBody.current.translation().z)
+    camera.position.set(myBody.current.translation().x, myBody.current.translation().y+3.3, myBody.current.translation().z)
+    // camera.position.set(10, 2, 0)
     frontVector.set(0, 0, backward - forward)
     sideVector.set(left - right, 0, 0)
     direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(run?2*SPEED:SPEED).applyEuler(camera.rotation)
     // console.log(direction.x, velocity.y, direction.z)
     // if (direction.x > 1 || velocity.current[1] > 1 || direction.z > 1)
     // console.log('rigid', { x: direction.x, y: velocity.y, z: direction.z })
-    // myBody.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
-    // myBody.current.applyImpulse({ x: direction.x, y: velocity.y, z: direction.z }, true)
     myBody.current.setLinvel({x: direction.x, y: 0, z: direction.z}, true)
     // ref.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
     // jumping
     // const ray = rapier.world.raw().castRay(new RAPIER.Ray(body.current.translation(), { x: 0, y: -1, z: 0 }))
     // if (jump && ray && ray.collider && Math.abs(ray.toi) <= 1.75) body.current.setLinvel({ x: 0, y: 3, z: 0 })
-
-    // console.log('euler', euler(camera?.rotation))
-    // if (getAngle(currentAngle) !== lastAngle) {
-      // lastAngle = getAngle(currentAngle)
-      // const eu = euler(camera?.rotation)
-      // console.log('lastAngle', lastAngle, 'current', myBody?.current?.rotation())
-
-      // myBody?.current?.setRotation()
-      // const quaternion = quat(myBody.current.rotation())
-      // myBody?.current?.setRotation(euler(camera?.rotation), true)
-      // myBody?.current?.setRotation(myBody?.current?.rotation().setFromAxisAngle(new THREE.Vector3(0, 1, 0), lastAngle))
-    // }
   })
 
   return (
@@ -396,13 +470,13 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         scale={2}
         mass={10}
       >
-        {/* <primitive object={myScene} /> */}
+        {/* <primitive object={myScene} ref={primRef} /> */}
         <CuboidCollider args={[.32, .85, .32]} position={[0, .83, 0]} />
       </RigidBody>
       <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
-      <OtherPlayer position={[24,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} animations={animations} players={players} id={2} />
-      <OtherPlayer position={[26,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} animations={animations} players={players} id={3} />
-      <OtherPlayer position={[26,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} />
+      <OtherPlayer position={[26,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} animations={animations} players={players} id={2} />
+      <OtherPlayer position={[30,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} animations={animations} players={players} id={3} />
+      <OtherPlayer position={[34,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} />
       <Chairs h={handleChairClick} />
     </>
   )

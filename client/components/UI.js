@@ -13,7 +13,7 @@ import { socket } from '../constants'
 
 export default function UI({ players }) {
   const [expanded, setExpanded] = useState(false)
-  const [msg, setMsg] = useState()
+  const [msg, setMsg] = useState('')
   const ref = useRef()
   const inputRef = useRef()
   const codeBtn = useRef()
@@ -34,7 +34,7 @@ export default function UI({ players }) {
 
   function sendMessage(e) {
     if (e) e.preventDefault()
-    if (!msg) return
+    if (msg === '') return
     const msgObj = {
       author: localStorage.getItem('name'),
       body: msg,
@@ -58,7 +58,7 @@ export default function UI({ players }) {
 
   useEffect(() => {
     if (inputRef?.current) {
-      setTimeout(() => inputRef.current.focus(), 200)
+      setTimeout(() => inputRef.current?.focus(), 200)
     }
   }, [expanded])
 

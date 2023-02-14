@@ -6,6 +6,7 @@
 - [voxel socket fps with ai](https://github.com/Eric-Gurt/StarDefenders3D)
 - [reload animation](https://github.com/mohsenheydari/three-fps)
 - [threejs fps](https://github.com/mrdoob/three.js/blob/dev/examples/games_fps.html)
+- [animation](https://tympanus.net/codrops/2019/10/14/how-to-create-an-interactive-3d-character-with-three-js)
 
 ### Rapier
 - [github](https://github.com/Viki-17/react-character-collider/blob/bb6d8598fb71cb17b9a8db6304b20b7db8bff8f4/src/Soilder.jsx)

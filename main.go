@@ -67,6 +67,12 @@ type Move struct {
 	Order    int8   `json:"order"`
 }
 
+type Chair struct {
+	Id    int8   `json:"Id"`
+	Order int8   `json:"order"`
+	State string `json:"state"`
+}
+
 func check(err error) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("")
@@ -400,9 +406,29 @@ func main() {
 			socket.Broadcast().To(server.Room(rkey)).Emit("status", status[0])
 		})
 
-		socket.On("sit", func(data ...any) {
-			log.Print("sending sit ", data[0])
-			socket.Broadcast().To(server.Room(rkey)).Emit("sit", data[0])
+		socket.On("chair", func(data ...any) {
+
+			// if arr, ok := data[0].([]any); ok {
+			// 	var chair Chair
+			// 	log.Print("type", typeof(arr[0]))
+			// 	if id, ok := arr[0].(string); ok {
+			// 		chair.Id = int8(id)
+			// 	} else {
+			// 		log.Print("failed to cast id to float64")
+			// 	}
+			// 	if order, ok := arr[1].(string); ok {
+			// 		chair.Order = int8(order)
+			// 	} else {
+			// 		log.Print("failed to cast order to float64")
+			// 	}
+			// 	if state, ok := arr[2].(string); ok {
+			// 		chair.State = state
+			// 	} else {
+			// 		log.Print("failed to cast state to string")
+			// 	}
+			// 	log.Print("sending sit ", chair, " ", typeof(chair.Id), " ", typeof(chair.Order), " ", typeof(chair.State))
+			// }
+			socket.Broadcast().To(server.Room(rkey)).Emit("chair", data[0])
 		})
 
 		socket.On("drop", func(data ...any) {
@@ -417,6 +443,10 @@ func main() {
 		socket.On("reset", func(data ...any) {
 			log.Print("sending reset ", data[0])
 			socket.Broadcast().To(server.Room(rkey)).Emit("reset", data[0])
+		})
+
+		socket.On("animation", func(data ...any) {
+			socket.Broadcast().To(server.Room(rkey)).Emit("animation", data[0])
 		})
 
 		socket.On("update", func(data ...any) {

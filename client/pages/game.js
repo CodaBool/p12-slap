@@ -109,10 +109,6 @@ export default function index() {
       console.log('err', code)
     })
 
-    socket.on("sit", code => {
-      console.log('sit', code)
-    })
-
     socket.on("status", status => {
       console.log('status ->', status)
       setCountdown(true)
@@ -138,7 +134,6 @@ export default function index() {
       socket.off('disconnected')
       socket.off('status')
       socket.off('err')
-      socket.off('sit')
       socket.off('join')
       socket.off('update')
       socket.off('deck-change')
@@ -602,7 +597,7 @@ export default function index() {
                 <PlayerText players={playersState} />
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
-                {/* <Debug /> */}
+                <Debug />
                 <Button position={[0, 2, 0]} action={start} color="green" players={playersState} />
                 {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
                 {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}
