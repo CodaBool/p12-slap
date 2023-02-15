@@ -36,6 +36,7 @@
 # Models
 - [Table](https://sketchfab.com/3d-models/low-poly-table-b940256ec5994e26a9e71289d1211b19)
 - [Chair](https://sketchfab.com/3d-models/chair-b07d263a7ab942e6935e77cd75bf1194)
+- [Room](https://sketchfab.com/3d-models/control-room-re-upload-e79e77650b5749f5a1ba18c5124e67b4)
 
 
 # Links

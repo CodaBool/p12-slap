@@ -6,6 +6,7 @@ import { socket, breakIntoParts, shuffleArr, copy, cardNames } from '../constant
 // import Cube from '../components/three/Cube'
 // import PlayerComponent from '../components/three/Player'
 import Table from '../components/three/Table'
+import Room from '../components/three/Room'
 import PlayersAndChairs from '../components/three/PlayerV2'
 // import AllOtherPlayers from '../components/three/OtherPlayer'
 // import Computer from '../components/three/Computer'
@@ -576,7 +577,7 @@ export default function index() {
           <Canvas shadows camera={{ fov: 50 }} style={{height: '100vh'}}>
             {/* <Stats showPanel={1} /> */}
             {/* <Perf /> */}
-            <Sky sunPosition={[100, 20, 100]} distance={5000} />
+            {/* <Sky sunPosition={[100, 20, 100]} distance={5000} /> */}
             {/* <color attach="background" args={['#000000']} /> */}
             <ambientLight intensity={.4} />
             <pointLight  castShadow intensity={2} position={[20, 50, 0]}  color="#5A5233" />
@@ -585,6 +586,7 @@ export default function index() {
                 <Ground />
                 <PlayersAndChairs slap={slap} gameLoop={gameLoop} players={playersState} />
                 <Table />
+                <Room />
                 <Cards />
                 {/* <Text position={[-.4,2,1.6]} rotation={[-Math.PI /2,0,0]} text="Change Turn" /> */}
                 <TextMesh position={[0, 2.2, 0]} rotation={[0,0,0]} scale={1} players={playersState} text="Start" spin />
@@ -593,11 +595,11 @@ export default function index() {
                 <TextMesh position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
                 <TurnText players={playersState} />
                 <Timer />
-                <CardInfo stack={stackState} />
+                {/* <CardInfo stack={stackState} /> */}
                 <PlayerText players={playersState} />
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
-                <Debug />
+                {/* <Debug /> */}
                 <Button position={[0, 2, 0]} action={start} color="green" players={playersState} />
                 {/* <Button position={[0, 2, 1.8]} action={nextTurn} color="yellow" /> */}
                 {/* <Button position={[1.8, 2, 0]} action={() => socket.emit('reset')} color="red" /> */}

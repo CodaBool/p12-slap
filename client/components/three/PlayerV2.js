@@ -246,7 +246,7 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (locked) return
+      if (locked || !myBody.current) return
       camera.getWorldDirection( vector )
       cameraRotation = (Math.atan2(vector.z,vector.x)+1.6) * (-1)
       if (Math.abs(lastPos[0] - myBody.current.translation().x) > .5 || Math.abs(lastPos[1] - myBody.current.translation().z) > .5 || Math.floor(cameraRotation) !== lastPos[2]) {

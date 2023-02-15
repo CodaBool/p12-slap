@@ -1,8 +1,6 @@
 import { useGLTF } from "@react-three/drei"
 import { RigidBody, CuboidCollider } from "@react-three/rapier"
 import { useMemo } from "react"
-// import { socket } from '../../constants'
-// import { useStore } from '../../pages/game'
 import * as THREE from "three"
 
 export default function Chairs({h}) {
