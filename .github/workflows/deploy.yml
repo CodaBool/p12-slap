@@ -22,24 +22,24 @@ jobs:
         env:
           SHA: ${{ toJSON(github.sha) }}
           RUN_NUMBER: ${{ toJSON(github.run_number) }}
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
-      - name: Build Binary
-        run: GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ./ops/server main.go
+      # - uses: actions/setup-go@v3
+      #   with:
+      #     go-version: '^1.20.0' # https://github.com/actions/go-versions/blob/main/versions-manifest.json
+      # - name: Build Binary
+      #   run: GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ./ops/server main.go
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::919759177803:role/gh-action-assume
           aws-region: us-east-1
-      - name: Pricing
-        run: |
-          price=$(aws --region=us-east-1 ec2 describe-spot-price-history --instance-types t4g.nano --start-time=$(date +%s) --product-descriptions="Linux/UNIX" --query 'SpotPriceHistory[*].{az:AvailabilityZone, price:SpotPrice}' | jq -r ".[] | select(.az == \"us-east-1a\") | .price")
-          price_day=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24, 2))" $price)
-          price_month=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24 * 30.4, 2))" $price)
-          echo "Server will cost \$$price_day/day & \$$price_month/month"
-      - uses: hashicorp/setup-packer@main
-        with:
-          version: "1.8.6" # https://releases.hashicorp.com/packer
+      # - name: Pricing
+      #   run: |
+      #     price=$(aws --region=us-east-1 ec2 describe-spot-price-history --instance-types t4g.nano --start-time=$(date +%s) --product-descriptions="Linux/UNIX" --query 'SpotPriceHistory[*].{az:AvailabilityZone, price:SpotPrice}' | jq -r ".[] | select(.az == \"us-east-1a\") | .price")
+      #     price_day=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24, 2))" $price)
+      #     price_month=$(python3 -c "import sys; print(round(float(sys.argv[1]) * 24 * 30.4, 2))" $price)
+      #     echo "Server will cost \$$price_day/day & \$$price_month/month"
+      # - uses: hashicorp/setup-packer@main
+      #   with:
+      #     version: "1.8.6" # https://releases.hashicorp.com/packer
       # - name: Packer
       #   working-directory: ./ops
       #   run: |
@@ -58,6 +58,9 @@ jobs:
       - name: Dashboard
         working-directory: ./ops
         run: |
+          terraform output instance
           PRIVATE_DNS=$(terraform output -json instance | jq -r ".private_dns")
           INSTANCE_ID=$(terraform output -json instance | jq -r ".spot_instance_id")
+          echo $PRIVATE_DNS
+          echo $INSTANCE_ID
           ./dashboard.sh $PRIVATE_DNS $INSTANCE_ID
