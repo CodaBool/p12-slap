@@ -58,7 +58,9 @@ jobs:
       - name: Dashboard
         working-directory: ./ops
         run: |
-          terraform output instance
+          SIMPLE=$(terraform output -json instance)
+          echo $SIMPLE
+          echo $SIMPLE | jq -r . 
           PRIVATE_DNS=$(terraform output -json instance | jq -r ".private_dns")
           INSTANCE_ID=$(terraform output -json instance | jq -r ".spot_instance_id")
           echo $PRIVATE_DNS
