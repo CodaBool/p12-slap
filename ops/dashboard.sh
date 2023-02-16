@@ -8,8 +8,8 @@ fi
 PRIVATE_DNS_NAME="$1"
 INSTANCE_ID="$2"
 
-# echo "PRIVATE_DNS_NAME $PRIVATE_DNS_NAME"
-# echo "INSTANCE_ID $INSTANCE_ID"
+echo "PRIVATE_DNS_NAME $PRIVATE_DNS_NAME"
+echo "INSTANCE_ID $INSTANCE_ID"
 
 DASHBOARD_SOURCECODE=$( jq -n \
   --arg BLUE "#17becf" \
@@ -292,6 +292,6 @@ DASHBOARD_SOURCECODE=$( jq -n \
   ]
 }' )
 
-# echo $DASHBOARD_SOURCECODE
+echo $DASHBOARD_SOURCECODE
 
 aws cloudwatch put-dashboard --dashboard-name "Slap" --dashboard-body "$DASHBOARD_SOURCECODE"
