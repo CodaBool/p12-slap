@@ -25,16 +25,17 @@ data "external" "lowest_price" {
   program = ["bash", "price.sh"]
 }
 
-output "price" {
-  value = data.external.lowest_price.result.price
-}
+# output "price" {
+#   value = data.external.lowest_price.result.price
+# }
 
 output "instance" {
   value = module.ec2.instance
 }
-output "eip" {
-  value = module.ec2.eip
-}
+
+# output "eip" {
+#   value = module.ec2.eip
+# }
 
 variable "ssh_ip" {
   type = string

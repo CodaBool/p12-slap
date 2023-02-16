@@ -367,20 +367,26 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     if (desiredState === 'sit') {
       if (chair === 4) {
         myBody.current.setTranslation({ x: 2.8, y: 0, z: 0 }, true)
-        camera.position.set(2.8, 3.8, 0)
-        camera.rotation.set(-1.5737, 0.96879, 1.57432)
+        // camera.position.set(2.8, 3.8, 0)
+        // camera.rotation.set(-1.5737, 0.96879, 1.57432)
+        camera.position.set(0, 6, 1)
+        camera.rotation.set(-1.4, 0, 0)
       } else if (chair === 3) {
         myBody.current.setTranslation({ x: -2.8, y: 0, z: 0 }, true)
-        camera.position.set(-2.8, 3.8, 0)
-        camera.rotation.set(-1.5707, -0.9547, -1.5707)
+        // camera.position.set(-2.8, 3.8, 0)
+        // camera.rotation.set(-1.5707, -0.9547, -1.5707)
+        camera.position.set(0, 6, 1)
+        camera.rotation.set(-1.4, 0, 0)
       } else if (chair === 2) {
         myBody.current.setTranslation({ x: 0, y: 0, z: -2.8 }, true)
-        camera.position.set(0, 3.8, -2.8)
-        camera.rotation.set(.6, Math.PI, 0)
+        // camera.position.set(0, 3.8, -2.8)
+        // camera.rotation.set(.6, Math.PI, 0)
+        camera.position.set(0, 6, 1)
+        camera.rotation.set(-1.4, 0, 0)
       } else if (chair === 1) {
         myBody.current.setTranslation({ x: 0, y: 0, z: 2.8 }, true)
-        camera.position.set(0, 3.8, 2.8)
-        camera.rotation.set(-.6, 0, 0)
+        camera.position.set(0, 6, 1)
+        camera.rotation.set(-1.4, 0, 0)
       }
       setCurrentChair(chair)
       myAnimation = 'Sit'
@@ -419,10 +425,10 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     if (e.buttons === 2) { // RMB
       if (!locked || !currentChair) return
       changeMyChair('stand', currentChair, Number(order))
-      let size = 1
+      // let size = 1
       // stack.forEach(() => size++)
-      camera.position.set(0, 3.7 + (size * .05), .7)
-      camera.rotation.set(-Math.PI /2.5, 0, 0)
+      // camera.position.set(0, 3.7 + (size * .05), .7)
+      // camera.rotation.set(-Math.PI /2.5, 0, 0)
     } else if (e.buttons === 1) { // LMB
       if (locked) {
         socket.emit('animation', ['Slap', order])

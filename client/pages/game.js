@@ -469,6 +469,13 @@ export default function index() {
     const withCards = players.filter(p => p.deck.length)
     console.log('end check, players with cards', withCards)
     if (withCards.length > 1) return false
+
+    // check for extended play stack win
+    const me = players.find(p => p.uid == uid)
+    if (me.deck.length === 0) {
+      console.log('you won the battle but not the war...yet')
+      return false
+    }
     
     for (const i in players) {
       if (players[i].uid == winnerID) {
@@ -554,10 +561,10 @@ export default function index() {
                 {/* <Text position={[1.6,2,.2]} rotation={[-Math.PI /2,0,Math.PI /2]} text="Reset" /> */}
                 {/* <Text position={[-1.6,2,-.3]} rotation={[-Math.PI /2,0,-Math.PI /2]} text={errMsg} /> */}
                 <TextMesh position={[-.15, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.5} text={errMsg} setText={setErrMsg} players={playersState} />
-                <TurnText players={playersState} />
+                {/* <TurnText players={playersState} /> */}
                 <Timer />
                 {/* <CardInfo stack={stackState} /> */}
-                <PlayerText players={playersState} />
+                {/* <PlayerText players={playersState} /> */}
                 {/* <Scene2 /> */}
                 {/* <Scene /> */}
                 {/* <Debug /> */}
