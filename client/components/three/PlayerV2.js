@@ -221,9 +221,27 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         scene4.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
       }
     })
+    
+    socket.on("leave", ioPlayer => {
+      if (ioPlayer.order === 1) {
+        body1.current.setTranslation({ x: 22, y: .04, z: 20 }, true)
+        body1.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      } else if (ioPlayer.order === 2) {
+        body2.current.setTranslation({ x: 26, y: .04, z: 20 }, true)
+        body2.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      } else if (ioPlayer.order === 3) {
+        body3.current.setTranslation({ x: 30, y: .04, z: 20 }, true)
+        body3.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      } else if (ioPlayer.order === 4) {
+        body4.current.setTranslation({ x: 34, y: .04, z: 20 }, true)
+        body4.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      }
+    })
+
     return () => {
       socket.off('animation')
       socket.off('chair')
+      socket.off('leave')
       socket.off('move')
     }
   }, [])

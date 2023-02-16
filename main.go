@@ -304,7 +304,7 @@ func main() {
 	io := server.NewServer(httpServer, config)
 
 	debugLogger()
-	go debug(io, players)
+	// go debug(io, players)
 
 	// USEFUL
 	// types.NewStringBufferString("xxx")
@@ -402,7 +402,6 @@ func main() {
 		})
 
 		socket.On("status", func(status ...any) {
-			log.Print("sending status ", status[0])
 			socket.Broadcast().To(server.Room(rkey)).Emit("status", status[0])
 		})
 
@@ -524,6 +523,7 @@ func main() {
 			if player, ok := players[id]; ok {
 				log.Info().Str("Room", rkey).Str("ID", string(socket.Id())).Str("Name", player.Name).Msg("🚪")
 			}
+			socket.Broadcast().To(server.Room(rkey)).Emit("leave", players[id])
 			delete(players, id)
 		})
 	})

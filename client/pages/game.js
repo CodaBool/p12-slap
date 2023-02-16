@@ -100,10 +100,8 @@ export default function index() {
       }
     })
 
-    socket.on("disconnected", ioPlayer => {
-      // TODO: this will frequently cause a runtime error because of a null player
-      console.log('trying to remove', ioPlayer)
-      players = players.filter(p => p.id !== ioPlayer?.id)
+    socket.on("leave", ioPlayer => {
+      players = players.filter(p => p.uid !== ioPlayer.uid)
     })
 
     socket.on("err", code => {
@@ -132,9 +130,9 @@ export default function index() {
     // socket.on('resetAll', () => { } ) // this logic has been moved to <Cards />
     // useStore.subscribe( store => {} ) // don't know of a way this is useful yet
     return () => {
-      socket.off('disconnected')
       socket.off('status')
       socket.off('err')
+      socket.off('leave')
       socket.off('join')
       socket.off('update')
       socket.off('deck-change')
@@ -181,7 +179,7 @@ export default function index() {
 
     // deals cards
     // const evenlyDealt = breakIntoParts(cardKeys.length, players.length)
-    const evenlyDealt = breakIntoParts(12, players.length)
+    const evenlyDealt = breakIntoParts(process.env.NEXT_PUBLIC_DECK_SIZE, players.length)
     shuffleArr(cardNames)
 
     evenlyDealt.forEach((size, i) => {
@@ -204,18 +202,22 @@ export default function index() {
   // - left played a jack, right played last card and failed duel
   // - success slap by person out of cards failed to winStack
   // - failed to set status to ready after duel was won where loser dropped last card for last duel chance
+  // - win does not sync (successful duel)
   function gameLoop() {
     const me = players.find(p => p.uid == uid)
     // TODO: deliver a message whenever returning
     if (!me.deck.length) {
+      console.log('preventing turn, no cards')
       setErrMsg("you don't have any cards")
       return
     } else if (!me.turn) {
+      console.log('preventing turn, its not your turn')
       setErrMsg('not your turn')
       return
     }
     if (status === 'froze') {
       // console.error('you cannot have a turn while a timer is running')
+      console.log('preventing turn, the state is frozen')
       setErrMsg('you lost a duel')
       return
     }
@@ -246,6 +248,7 @@ export default function index() {
         me.deck[0].includes('k') ||
         me.deck[0].includes('q') ||
         me.deck[0].includes('a')) {
+      console.log('found face card')
       face = true
       faceOwner = uid
     } else {
@@ -256,36 +259,17 @@ export default function index() {
         const endIndex = (Number(i) + 2) * -1
         const card = stack.at(endIndex)
         // console.log('card', card, 'at', i, 'from end')
-        if (!card) continue
-
-        // losing duel points
-        if (i == 0 && card.includes('j')) {
-          lostDuel = true
-        } else if (i == 1 && card.includes('q')) {
-          lostDuel = true
-        } else if (i == 2 && card.includes('k')) {
-          lostDuel = true
-        } else if (i == 3 && card.includes('a')) {
-          lostDuel = true
+        if (!card) {
+          console.log('skipping stack check because no card at index', endIndex, stack)
+          continue
         }
 
-        if (lostDuel) {
-          setStatus('froze')
-          socket.emit('status', 'froze')
-          setCountdown(true)
-
-          // update stack everywhere
-          for (const i in players) {
-            if (players[i].uid == uid) players[i].deck.shift()
-          }
-          socket.emit('update', { players, stack })
-
-          setTimeout(stack => {
-            // this has the stack info at start of duel which
-            // could be used for a better check system
-            winStack(faceOwner, 'duel')
-          }, 5000, stack)
-          return
+        // losing duel points
+        if (i == 0 && card.includes('j') ||
+            i == 1 && card.includes('q') ||
+            i == 2 && card.includes('k') ||
+            i == 3 && card.includes('a')) {
+          lostDuel = true
         }
 
         // check for ongoing duel
@@ -293,11 +277,22 @@ export default function index() {
             card.includes('k') ||
             card.includes('a')) {
           duel = true
-          // console.log('duel in progress')
-          // console.log('Found duel card', card, 'at', i, 'from end. keeping turn state')
+          console.log('Found duel card', card, 'at', i, 'from end. keeping turn state')
           break
         }
       }
+    }
+    
+    if (lostDuel) {
+      me.deck.shift()
+      ss()
+      setTimeout(stack => {
+        // this has the stack info at start of duel which
+        // could be used for a better check system
+        console.log('5s timeout, check for stack win')
+        winStack(faceOwner, 'duel')
+      }, 5000, stack)
+      return
     }
 
     // const tempStack = Array.from(stack)
@@ -306,117 +301,77 @@ export default function index() {
     // possible end state check, prev player played their last extended face
     const withCardsBeforeDrop = players.filter(p => p.deck.length)
     if (withCardsBeforeDrop.length === 1) {
-      console.log('deck before shift', me.deck)
+      console.log('extended face block', withCardsBeforeDrop.length, !duel)
+    }
+    if (withCardsBeforeDrop.length === 1 && !duel) {
       me.deck.shift()
-      console.log('deck after shift', me.deck)
-      setStatus('froze')
-      socket.emit('status', 'froze')
-      setCountdown(true)
-
-      // update stack everywhere
-      // got a weird behavior where this update did not emit
-      // when the loser played last and the opponent had just put down Ace
-      socket.emit('update', { players, stack })
-
+      ss()
       setTimeout(stack => {
         console.log('extended face replaced with last player duel')
         endGame(withCardsBeforeDrop[0].uid)
       }, 5000, stack)
-
       return
     }
 
-    // remove index 0 card
-    // TODO: should see if 'me' is possible here
+    me.deck.shift()
 
+    // change turn if played face, no cards, or a duel isnt happening
+    if (face || !me.deck.length || !duel) {
+      console.log('face', face, ' || out of cards', me.deck.length, '|| !duel', !duel)
 
-    for (const i in players) {
-      if (players[i].uid == uid) {
+      // only include people with cards as those who can have a turn
+      const withCards = players.filter(p => p.deck.length)
 
-        players[i].deck.shift()
+      if (!me.deck.length) {
+        console.log('out of cards, alerting chat')
+        setErrMsg("Out of cards")
+        messageAll(me.name + " is out of cards")
+      }
 
-        // change turn if played face, no cards, or in duel
-        if (face || !players[i].deck.length || !duel) {
-          // console.log('face', face, ' || out of cards', players[i].deck.length)
+      if (withCards.length < 2 && !me.deck.length && !face) {
+        ss()
+        console.log('freezing since last player and I have no cards and There wasnt a face card')
+        setTimeout(stack => {
+          console.log('triggered end game because you played your last card')
+          endGame(withCards[0].uid)
+        }, 5000, stack)
 
-          // only include people with cards as those who can have a turn
-          const withCards = players.filter(p => p.deck.length)
-          
-          // check if you ran out of cards
-          // if (!players[i].deck.length && face) {
-          //   // still in game as long as duel is live
-          //   setErrMsg("Out of cards")
-          // } else if (!players[i].deck.length && !face) {
-          //   setErrMsg("Out of cards")
-          //   messageAll(players[i].name + " is out of cards")
-          // } else {
-          //   // TODO: could be a goal state if last opponent card is dropped
-          //   if (withCards.length < 2) {
-  
-          //     setStatus('froze')
-          //     socket.emit('status', 'froze')
-          //     setCountdown(true)
-  
-          //     // update stack everywhere
-          //     socket.emit('update', { players, stack })
-  
-          //     setTimeout(stack => {
-          //       console.log('triggered end game because you played your last card')
-          //       endGame(withCards[0].id)
-          //     }, 5000, stack)
-  
-          //     return
-          //   }
-          // }
-
-
-          if (!players[i].deck.length) {
-            setErrMsg("Out of cards")
-            messageAll(players[i].name + " is out of cards")
-          }
-
-          if (withCards.length < 2 && !players[i].deck.length && !face) {
-  
-            setStatus('froze')
-            socket.emit('status', 'froze')
-            setCountdown(true)
-
-            // update stack everywhere
-            // got a weird behavior where this update did not emit
-            // when the loser played last and the opponent had just put down Ace
-            socket.emit('update', { players, stack })
-
-
-            setTimeout(stack => {
-              console.log('triggered end game because you played your last card')
-              endGame(withCards[0].uid)
-            }, 5000, stack)
-
-            return
-          }
-          
-          // TODO: there is a new player prop called 'order'. This could be used for
-          // deciding turn order
-          // NOTE: changing the withCards array will update players array
-          let index = withCards.findIndex(p => p.turn == true)
-          if (index === -1) {
-            // played last card
-            players[i].turn = false
-          } else {
-            withCards[index].turn = false
-          }
-          if (withCards.length == 1) {
-            withCards[0].turn = true 
-          } else {
-            if (index == withCards.length - 1) {
-              index = -1
-            }
-            players[index + 1].turn = true
-          }
+        return
+      }
+      
+      // TODO: there is a new player prop called 'order'. This could be used for
+      // deciding turn order
+      // NOTE: changing the withCards array will update players array
+      
+      let index = withCards.findIndex(p => p.turn == true)
+      if (index === -1) {
+        // played last card
+        me.turn = false
+      } else {
+        withCards[index].turn = false
+      }
+      if (withCards.length == 1) {
+        console.log('setting next player to last player', withCards[0].name)
+        withCards[0].turn = true 
+      } else {
+        if (index == withCards.length - 1) {
+          index = -1
         }
+        console.log('setting next player ', players[index + 1].name)
+        players[index + 1].turn = true
       }
     }
     socket.emit('update', { players, stack, faceOwner: face ? faceOwner : "" })
+  }
+
+  function ss() {
+    setStatus('froze')
+    socket.emit('status', 'froze')
+    setCountdown(true)
+    console.log('starting duel win timmer')
+    // requires shift for lostDuel
+    socket.emit('update', { players, stack })
+
   }
 
   function slap() {
@@ -513,10 +468,11 @@ export default function index() {
     // check if someone did a successful slap
     const withCards = players.filter(p => p.deck.length)
     console.log('end check, players with cards', withCards)
-    if (withCards.length > 1) return
+    if (withCards.length > 1) return false
     
     for (const i in players) {
       if (players[i].uid == winnerID) {
+        console.log(players[i].name + ' has won!')
         setErrMsg(players[i].name + ' has won!')
         messageAll(players[i].name + ' has won!')
       }
@@ -526,6 +482,7 @@ export default function index() {
     stack = []
     setStatus('ready')
     socket.emit('update', { players, stack, state: 'end' })
+    return true
   }
 
   function winStack(winnerUID, type) {
@@ -539,9 +496,11 @@ export default function index() {
       }
     }
 
+    console.log('stack win check', players, 'but first check for end game win', winnerUID)
+
     // check for game end
     // console.log('checking end state after a stack was won', winnerUID)
-    endGame(winnerUID) // does internal check to see if true
+    if (endGame(winnerUID)) return
 
     // remove whoever had turn before
     let index = players.findIndex(p => p.turn == true)
@@ -551,6 +510,7 @@ export default function index() {
 
     for (const i in players) {
       if (players[i].uid == winnerUID) {
+        console.log('setting duel winner', players[i].name, 'adding', stack.length, 'cards')
         players[i].turn = true // set it to my turn
         players[i].deck.push(...stack) // mutable
       }
@@ -560,6 +520,7 @@ export default function index() {
     socket.emit('update', { players, stack: [], state: 'win' })
   }
 
+  // TODO: this likely delays first paint
   if (!players.length) return <Load />
   
   return (
