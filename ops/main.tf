@@ -29,8 +29,12 @@ data "external" "lowest_price" {
 #   value = data.external.lowest_price.result.price
 # }
 
-output "instance" {
-  value = module.ec2.instance
+output "dns" {
+  value = module.ec2.instance.private_dns
+}
+
+output "id" {
+  value = module.ec2.instance.spot_instance_id
 }
 
 # output "eip" {
