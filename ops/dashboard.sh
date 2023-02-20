@@ -1,8 +1,5 @@
 #!/bin/bash
 
-
-# could be this shebang instead /usr/bin/env bash
-
 if [[ $# -eq 0 ]] ; then
   echo 'provide the private DNS name and the instance ID as 2 arguments respectively'
   exit 1
@@ -286,7 +283,7 @@ DASHBOARD_SOURCECODE=$( jq -n \
           "width": 18,
           "height": 11,
           "properties": {
-              "query": "SOURCE '/aws/ec2/slap' | fields @timestamp, @message\n| sort @timestamp desc\n| limit 100",
+              "query": "SOURCE \"/aws/ec2/slap\" | fields @timestamp, @message\n| sort @timestamp desc\n| limit 500",
               "region": "us-east-1",
               "stacked": false,
               "view": "table"
@@ -294,7 +291,5 @@ DASHBOARD_SOURCECODE=$( jq -n \
       }
   ]
 }' )
-
-echo $DASHBOARD_SOURCECODE
 
 aws cloudwatch put-dashboard --dashboard-name "Slap" --dashboard-body "$DASHBOARD_SOURCECODE"

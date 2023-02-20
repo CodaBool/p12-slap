@@ -79,9 +79,10 @@ packer build -debug .
 - (feature?) you will be able to slap on cards which are burned.
 - clicking start while seated attempts to also drop a card
 - will sit on "Joining game" in menu despite failed ws conn
-- holding control gives null ref
+- ~~holding control gives null ref~~
 - using npm i -f for the peer depend on latest rapier (rm this in Vercel)
 - got a card is undefined when playing for over 5 minutes, and 5+ games
+- typing space attempts a slap when you try to type
 
 # Compression
 MeshoptDecoder is already used in useGLTF loader
@@ -94,6 +95,14 @@ compared to the newer decoder [here](https://github.com/zeux/meshoptimizer/blob/
 - NOTE: empty namespaces will timeout after 45s
 - consider changing opening chat to Enter
 - would be nice to only drop cards if looking at table 
+- should give message to all when a bad slap happened
+- can filter out logs with agent.json
+```
+"filters": [{
+  "type": "exclude",
+  "expression": "URL query contains semicolon, which is no longer a supported separator"
+}],
+```
 
 # Go Migration notes
 ## Efficiency

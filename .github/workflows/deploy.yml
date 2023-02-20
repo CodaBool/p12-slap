@@ -60,6 +60,4 @@ jobs:
         run: |
           DNS=$(terraform output -raw dns)
           ID=$(terraform output -raw id)
-          echo $DNS
-          echo $ID
           ./dashboard.sh $DNS $ID

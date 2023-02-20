@@ -108,6 +108,22 @@ export default function index() {
       console.log('err', code)
     })
 
+    socket.on("drop", data => {
+      if (
+        data.id
+        && data.type === 'basic'
+        && (data.key.includes('q') 
+        || data.key.includes('k')
+        || data.key.includes('j')
+        || data.key.includes('a'))
+      ) {
+        console.log('new face owner', faceOwner, '->', data.id)
+        faceOwner = data.id
+      } else {
+        console.log('ignoring drop', data.key)
+      }
+    })
+
     socket.on("status", status => {
       console.log('status ->', status)
       setCountdown(true)
@@ -133,6 +149,7 @@ export default function index() {
       socket.off('status')
       socket.off('err')
       socket.off('leave')
+      socket.off('drop')
       socket.off('join')
       socket.off('update')
       socket.off('deck-change')
@@ -203,9 +220,10 @@ export default function index() {
   // - success slap by person out of cards failed to winStack
   // - failed to set status to ready after duel was won where loser dropped last card for last duel chance
   // - win does not sync (successful duel)
-  function gameLoop() {
+
+
+  function loop() {
     const me = players.find(p => p.uid == uid)
-    // TODO: deliver a message whenever returning
     if (!me.deck.length) {
       console.log('preventing turn, no cards')
       setErrMsg("you don't have any cards")
@@ -216,163 +234,372 @@ export default function index() {
       return
     }
     if (status === 'froze') {
-      // console.error('you cannot have a turn while a timer is running')
       console.log('preventing turn, the state is frozen')
       setErrMsg('you lost a duel')
       return
     }
 
-    // assumes move is valid and server would not block action
+    const card = me.deck[0]
+
     socket.emit('drop', {
-      id: me.id,
-      key: me.deck[0],
+      id: uid,
+      key: card,
       type: "basic"
     })
-    dropCard(me.deck[0], "basic")
-
-    // see if the hand was lost
-    
-    // critical points
-    // counter is at 0 (no face dropped)
-    // counter starts (face dropped)
-    // ran out of cards ()
-
-    stack = [...stack, me.deck[0]]
-    
-    // check if Jack, Queen, King, or Ace
-    let face = false
-    let duel = false
-    let lostDuel = false
-
-    if (me.deck[0].includes('j') ||
-        me.deck[0].includes('k') ||
-        me.deck[0].includes('q') ||
-        me.deck[0].includes('a')) {
-      console.log('found face card')
-      face = true
-      faceOwner = uid
-    } else {
-      // check to see if duel failed
-      // console.log('check for duel in stack', stack, faceOwner)
-      for (const i in stack) {
-        if (i > 3) break
-        const endIndex = (Number(i) + 2) * -1
-        const card = stack.at(endIndex)
-        // console.log('card', card, 'at', i, 'from end')
-        if (!card) {
-          console.log('skipping stack check because no card at index', endIndex, stack)
-          continue
-        }
-
-        // losing duel points
-        if (i == 0 && card.includes('j') ||
-            i == 1 && card.includes('q') ||
-            i == 2 && card.includes('k') ||
-            i == 3 && card.includes('a')) {
-          lostDuel = true
-        }
-
-        // check for ongoing duel
-        if (card.includes('q') ||
-            card.includes('k') ||
-            card.includes('a')) {
-          duel = true
-          console.log('Found duel card', card, 'at', i, 'from end. keeping turn state')
-          break
-        }
-      }
-    }
-    
-    if (lostDuel) {
-      me.deck.shift()
-      ss()
-      setTimeout(stack => {
-        // this has the stack info at start of duel which
-        // could be used for a better check system
-        console.log('5s timeout, check for stack win')
-        winStack(faceOwner, 'duel')
-      }, 5000, stack)
-      return
-    }
-
-    // const tempStack = Array.from(stack)
-    // tempStack.push(me.deck[0]) // push is mutable
-
-    // possible end state check, prev player played their last extended face
-    const withCardsBeforeDrop = players.filter(p => p.deck.length)
-    if (withCardsBeforeDrop.length === 1) {
-      console.log('extended face block', withCardsBeforeDrop.length, !duel)
-    }
-    if (withCardsBeforeDrop.length === 1 && !duel) {
-      me.deck.shift()
-      ss()
-      setTimeout(stack => {
-        console.log('extended face replaced with last player duel')
-        endGame(withCardsBeforeDrop[0].uid)
-      }, 5000, stack)
-      return
-    }
-
+    stack = [...stack, card]
+    dropCard(card, "basic")
     me.deck.shift()
 
-    // change turn if played face, no cards, or a duel isnt happening
-    if (face || !me.deck.length || !duel) {
-      console.log('face', face, ' || out of cards', me.deck.length, '|| !duel', !duel)
-
-      // only include people with cards as those who can have a turn
+    let playedFace = false
+    if (card.includes('j') || card.includes('k') || card.includes('q') || card.includes('a')) {
+      console.log('found face card', card, 'either newSS or change to next')
+      faceOwner = uid
+      playedFace = true
       const withCards = players.filter(p => p.deck.length)
-
-      if (!me.deck.length) {
-        console.log('out of cards, alerting chat')
-        setErrMsg("Out of cards")
-        messageAll(me.name + " is out of cards")
-      }
-
-      if (withCards.length < 2 && !me.deck.length && !face) {
-        ss()
-        console.log('freezing since last player and I have no cards and There wasnt a face card')
-        setTimeout(stack => {
-          console.log('triggered end game because you played your last card')
-          endGame(withCards[0].uid)
-        }, 5000, stack)
-
+      if (withCards.length === 1) {
+        newSS()
         return
-      }
-      
-      // TODO: there is a new player prop called 'order'. This could be used for
-      // deciding turn order
-      // NOTE: changing the withCards array will update players array
-      
-      let index = withCards.findIndex(p => p.turn == true)
-      if (index === -1) {
-        // played last card
+      } else {
+        // UNFORSEEN MESS not dry
         me.turn = false
-      } else {
-        withCards[index].turn = false
-      }
-      if (withCards.length == 1) {
-        console.log('setting next player to last player', withCards[0].name)
-        withCards[0].turn = true 
-      } else {
-        if (index == withCards.length - 1) {
-          index = -1
+        let index = players.findIndex(p => p.uid === uid) + 1
+        if (index === players.length) {
+          index = 0
         }
-        console.log('setting next player ', players[index + 1].name)
-        players[index + 1].turn = true
+        console.log('setting next player ', players[index].name)
+        players[index].turn = true
       }
     }
-    socket.emit('update', { players, stack, faceOwner: face ? faceOwner : "" })
+
+    let lostDuel = false
+    let duel = false
+    for (const [i, c] of [...stack].reverse().entries()) {
+      if (i > 4) break
+      // console.log('card check', i, c)
+      if (
+        i == 1 && c.includes('j')
+        || i == 2 && c.includes('q')
+        || i == 3 && c.includes('k')
+        || i == 4 && c.includes('a')
+      ) {
+        // if (i == 1 && c.includes('j')) {
+        //   console.log('lost on j')
+        // }
+        // if (i == 2 && c.includes('q')) {
+        //   console.log('lost on q')
+        // }
+        // if (i == 3 && c.includes('k')) {
+        //   console.log('lost on k')
+        // }
+        // if (i == 4 && c.includes('a')) {
+        //   console.log('lost on a')
+        // }
+        // console.log('lost duel')
+        if (!playedFace) lostDuel = true
+
+        // check for ongoing duel
+      }
+      if (
+        c.includes('q') 
+        || c.includes('k')
+        || c.includes('j')
+        || c.includes('a')
+      ) {
+        duel = true
+        console.log('Found duel card', card, 'at', i, 'from end. keeping turn state')
+        break
+      }
+    }
+    
+    if (!playedFace && !duel) {
+      // copy of played face
+      // UNFORSEEN MESS
+      console.log('not in duel and did not play a face')
+      const withCards = players.filter(p => p.deck.length)
+      if (withCards.length === 1) {
+        newSS()
+        return
+      } else {
+        me.turn = false
+        let index = players.findIndex(p => p.uid === uid) + 1
+        if (index === players.length) {
+          index = 0
+        }
+        console.log('setting next player ', players[index].name)
+        players[index].turn = true
+      }
+    }
+
+    // UNFORSEEN MESS conditional
+    if (!playedFace && duel && lostDuel) {
+      newStacky()
+      return
+    } else {
+      console.log('else lostDuel',me.deck.length, players.filter(p => p.deck.length).length)
+      if (me.deck.length === 0) {
+        if (players.filter(p => p.deck.length).length === 1) {
+          newSS()
+          return
+        } else {
+          console.log('setting new turn')
+          me.turn = false
+          let index = players.findIndex(p => p.uid === uid) + 1
+          if (index === players.length) {
+            index = 0
+          }
+          console.log('setting next player ', players[index].name)
+          players[index].turn = true
+        }
+      }
+    }
+    socket.emit('update', { players, stack })
   }
 
-  function ss() {
+  function newSS() {
     setStatus('froze')
     socket.emit('status', 'froze')
     setCountdown(true)
-    console.log('starting duel win timmer')
-    // requires shift for lostDuel
+    console.log('starting end timmer')
     socket.emit('update', { players, stack })
-
+    setTimeout(s => {
+      // TODO: find a better way to check for if a successful slap happened
+      console.log('5s timeout, check for game win')
+      const withCards = players.filter(p => p.deck.length)
+      if (stack.length < 2 || withCards.length > 1) {
+        console.log('duel stolen')
+        return
+      }
+      console.log(withCards[0].name + ' has won!')
+      setErrMsg(withCards[0].name + ' has won!')
+      messageAll(withCards[0].name + ' has won!')
+      for (const p of players) {
+        p.deck = []
+        p.turn = false
+      }
+      stack = []
+      setStatus('ready')
+      socket.emit('update', { players, stack, state: 'end' })
+    }, 5000, null)
   }
+
+  function newStacky() {
+    setStatus('froze')
+    socket.emit('status', 'froze')
+    setCountdown(true)
+    console.log('starting stack win timmer')
+    socket.emit('update', { players, stack })
+    console.log('pre time stack owner', faceOwner)
+    setTimeout(s => {
+      // TODO: find a better way to check for if a successful slap happened
+      console.log('5s timeout, check for stack win', faceOwner)
+      if (stack.length < 2) {
+        console.log('duel stolen')
+        return
+      }
+
+      for (const p of players) {
+        if (p.uid === faceOwner) {
+          p.turn = true
+          p.deck.push(...stack)
+        } else {
+          p.turn = false
+        }
+      }
+      stack = []
+
+      if (players.filter(p => p.deck.length).length === 1) {
+        newSS()
+        return
+      }
+
+      setStatus('ready')
+      socket.emit('update', { players, stack, state: 'win' })
+    }, 5000, null)
+  }
+
+  // function gameLoop() {
+  //   const me = players.find(p => p.uid == uid)
+  //   // TODO: deliver a message whenever returning
+  //   if (!me.deck.length) {
+  //     console.log('preventing turn, no cards')
+  //     setErrMsg("you don't have any cards")
+  //     return
+  //   } else if (!me.turn) {
+  //     console.log('preventing turn, its not your turn')
+  //     setErrMsg('not your turn')
+  //     return
+  //   }
+  //   if (status === 'froze') {
+  //     // console.error('you cannot have a turn while a timer is running')
+  //     console.log('preventing turn, the state is frozen')
+  //     setErrMsg('you lost a duel')
+  //     return
+  //   }
+
+  //   // assumes move is valid and server would not block action
+  //   socket.emit('drop', {
+  //     id: me.id,
+  //     key: me.deck[0],
+  //     type: "basic"
+  //   })
+  //   dropCard(me.deck[0], "basic")
+
+  //   // see if the hand was lost
+    
+  //   // critical points
+  //   // counter is at 0 (no face dropped)
+  //   // counter starts (face dropped)
+  //   // ran out of cards ()
+
+  //   stack = [...stack, me.deck[0]]
+    
+  //   // check if Jack, Queen, King, or Ace
+  //   let face = false
+  //   let duel = false
+  //   let lostDuel = false
+
+  //   if (me.deck[0].includes('j') ||
+  //       me.deck[0].includes('k') ||
+  //       me.deck[0].includes('q') ||
+  //       me.deck[0].includes('a')) {
+  //     console.log('found face card')
+  //     face = true
+  //     faceOwner = uid
+  //   } else {
+  //     // check to see if duel failed
+  //     // console.log('check for duel in stack', stack, faceOwner)
+  //     for (const i in stack) {
+  //       if (i > 3) break
+  //       const endIndex = (Number(i) + 2) * -1
+  //       const card = stack.at(endIndex)
+  //       // console.log('card', card, 'at', i, 'from end')
+  //       if (!card) {
+  //         console.log('skipping stack check because no card at index', endIndex, stack)
+  //         continue
+  //       }
+
+  //       // losing duel points
+  //       if (i == 0 && card.includes('j') ||
+  //           i == 1 && card.includes('q') ||
+  //           i == 2 && card.includes('k') ||
+  //           i == 3 && card.includes('a')) {
+  //         lostDuel = true
+  //       }
+
+  //       // check for ongoing duel
+  //       if (card.includes('q') ||
+  //           card.includes('k') ||
+  //           card.includes('a')) {
+  //         duel = true
+  //         console.log('Found duel card', card, 'at', i, 'from end. keeping turn state')
+  //         break
+  //       }
+  //     }
+  //   }
+    
+  //   if (lostDuel) {
+  //     me.deck.shift()
+  //     ss()
+  //     setTimeout(stack => {
+  //       // this has the stack info at start of duel which
+  //       // could be used for a better check system
+  //       console.log('5s timeout, check for stack win')
+  //       winStack(faceOwner, 'duel')
+  //     }, 5000, stack)
+  //     return
+  //   }
+
+  //   // const tempStack = Array.from(stack)
+  //   // tempStack.push(me.deck[0]) // push is mutable
+
+  //   // possible end state check, prev player played their last extended face
+  //   const withCardsBeforeDrop = players.filter(p => p.deck.length)
+  //   if (withCardsBeforeDrop.length === 1) {
+  //     console.log('extended face block', withCardsBeforeDrop.length, !duel)
+  //   }
+  //   if (withCardsBeforeDrop.length === 1 && !duel) {
+  //     me.deck.shift()
+  //     ss()
+  //     setTimeout(stack => {
+  //       console.log('extended face replaced with last player duel')
+  //       endGame(withCardsBeforeDrop[0].uid)
+  //     }, 5000, stack)
+  //     return
+  //   }
+
+  //   me.deck.shift()
+
+  //   // change turn if played face, no cards, or a duel isnt happening
+  //   if (face || !me.deck.length || !duel) {
+  //     console.log('face', face, ' || out of cards', me.deck.length, '|| !duel', !duel)
+
+  //     // only include people with cards as those who can have a turn
+  //     const withCards = players.filter(p => p.deck.length)
+
+  //     if (!me.deck.length) {
+  //       console.log('out of cards, alerting chat')
+  //       setErrMsg("Out of cards")
+  //       messageAll(me.name + " is out of cards")
+  //     }
+
+  //     if (withCards.length < 2 && !me.deck.length && !face) {
+  //       ss()
+  //       console.log('freezing since last player and I have no cards and There wasnt a face card')
+  //       setTimeout(stack => {
+  //         console.log('triggered end game because you played your last card')
+  //         endGame(withCards[0].uid)
+  //       }, 5000, stack)
+
+  //       return
+  //     }
+      
+  //     // TODO: there is a new player prop called 'order'. This could be used for
+  //     // deciding turn order
+  //     // NOTE: changing the withCards array will update players array
+      
+  //     let index = withCards.findIndex(p => p.turn == true)
+  //     if (index === -1) {
+  //       // played last card
+  //       me.turn = false
+  //     } else {
+  //       withCards[index].turn = false
+  //     }
+  //     if (withCards.length == 1) {
+  //       console.log('setting next player to last player', withCards[0].name)
+  //       withCards[0].turn = true 
+  //     } else {
+  //       if (index == withCards.length - 1) {
+  //         index = -1
+  //       }
+  //       console.log('setting next player ', players[index + 1].name)
+  //       players[index + 1].turn = true
+  //     }
+  //   }
+  //   socket.emit('update', { players, stack, faceOwner: face ? faceOwner : "" })
+  // }
+
+  function slapWin() {
+    // MORBIN TIME
+    for (const p of players) {
+      if (p.uid === uid) {
+        p.turn = true
+        p.deck.push(...stack)
+      } else {
+        p.turn = false
+      }
+    }
+    stack = []
+
+    if (players.filter(p => p.deck.length).length === 1) {
+      console.log('likely won off of slap')
+      newSS()
+      return
+    }
+    
+    socket.emit('update', { players, stack, state: 'win' })
+  }
+
+
 
   function slap() {
     if (stack.length < 2) {
@@ -384,7 +611,7 @@ export default function index() {
       // console.log('2x compare', latestType, stack.at(-2).charAt(0))
       if (latestType == stack.at(-2).charAt(0)) {
         // console.log('DOUBLE slap of type', latestType)
-        winStack(uid, 'slap')
+        slapWin()
         return
       }
   
@@ -393,7 +620,7 @@ export default function index() {
         // console.log('sandwich compare', latestType, stack.at(-3).charAt(0))
         if (latestType == stack.at(-3).charAt(0)) {
           // console.log('SANDWICH slap of type', latestType)
-          winStack(uid, 'slap')
+          slapWin()
           return
         }
       }
@@ -401,131 +628,118 @@ export default function index() {
     setErrMsg('bad slap')
 
     // burn 2 cards
-    for (const i in players) {
-      if (players[i].uid == uid) {
-        
-        // see if at least 1 card
-        if (!players[i].deck.length) return
-
-        // take next card
-        let cardKey = players[i].deck.shift()
-        socket.emit('drop', {
-          id: players[i].id,
-          key: cardKey,
-          type: 'firstBurn'
-        })
-        dropCard(cardKey, "firstBurn")
-
-        // add to bottom of stack
-        stack = [cardKey, ...stack]
-        
-        // still have a card
-        if (players[i].deck.length) {
-
-          // take next card
-          cardKey = players[i].deck.shift()
-          
-          socket.emit('drop', {
-            id: players[i].id,
-            key: cardKey,
-            type: 'secondBurn',
-          })
-          
-          dropCard(cardKey, 'secondBurn')
-          
-          // add to bottom of stack
-          stack = [cardKey, ...stack]
-        }
-
-        // check if youre out of cards and turn should change
-        if (!players[i].deck.length) {
-
-          const withCards = players.filter(p => p.deck.length)
-          if (withCards.length < 2) {
-            console.log('triggering end game due to bad slap')
-            endGame(withCards[0].uid)
-            return
-          }
-
-          if (players[i].turn) {
-            // set next turn
-            let index = withCards.findIndex(p => p.turn == true)
-            withCards[index].turn = false
-            if (index == withCards.length - 1) {
-              index = -1
-            }
-            withCards[index + 1].turn = true
-          }
-    
-        }
-
-        socket.emit('update', { players, stack })
-      }
-    }
-  }
-
-  function endGame(winnerID) {
-    // check if someone did a successful slap
-    const withCards = players.filter(p => p.deck.length)
-    console.log('end check, players with cards', withCards)
-    if (withCards.length > 1) return false
-
-    // check for extended play stack win
     const me = players.find(p => p.uid == uid)
+    if (me.deck.length === 0) return
+    let key = me.deck.shift()
+    socket.emit('drop', {
+      id: uid,
+      key,
+      type: 'firstBurn'
+    })
+    dropCard(key, "firstBurn")
+    stack = [key, ...stack]
+
+    if (me.deck.length > 0) {
+      
+      key = me.deck.shift()
+      
+      socket.emit('drop', {
+        id: uid,
+        key,
+        type: 'secondBurn',
+      })
+      
+      dropCard(key, 'secondBurn')
+      
+      stack = [key, ...stack]
+    }
+
     if (me.deck.length === 0) {
-      console.log('you won the battle but not the war...yet')
-      return false
-    }
-    
-    for (const i in players) {
-      if (players[i].uid == winnerID) {
-        console.log(players[i].name + ' has won!')
-        setErrMsg(players[i].name + ' has won!')
-        messageAll(players[i].name + ' has won!')
-      }
-      players[i].deck = []
-      players[i].turn = false
-    }
-    stack = []
-    setStatus('ready')
-    socket.emit('update', { players, stack, state: 'end' })
-    return true
-  }
 
-  function winStack(winnerUID, type) {
-
-    // TODO: do a better check on if a slap stole the pile
-    // this check will not work if the goes goes too fast
-    if (type == 'duel') {
-      if (stack.length < 2) {
-        console.log('duel stolen')
+      const withCards = players.filter(p => p.deck.length)
+      if (withCards.length === 1) {
+        console.log('triggering end game due to bad slap')
+        newSS()
         return
       }
-    }
 
-    console.log('stack win check', players, 'but first check for end game win', winnerUID)
-
-    // check for game end
-    // console.log('checking end state after a stack was won', winnerUID)
-    if (endGame(winnerUID)) return
-
-    // remove whoever had turn before
-    let index = players.findIndex(p => p.turn == true)
-    if (index !== -1) {
-      players[index].turn = false
-    }
-
-    for (const i in players) {
-      if (players[i].uid == winnerUID) {
-        console.log('setting duel winner', players[i].name, 'adding', stack.length, 'cards')
-        players[i].turn = true // set it to my turn
-        players[i].deck.push(...stack) // mutable
+      if (me.turn) {
+        me.turn = false
+        let index = players.findIndex(p => p.uid === uid) + 1
+        if (index === players.length) {
+          index = 0
+        }
+        console.log('setting next player ', players[index].name)
+        players[index].turn = true
       }
-    }
 
-    stack = []
-    socket.emit('update', { players, stack: [], state: 'win' })
+      
+    }
+    socket.emit('update', { players, stack })
   }
+
+  // function endGame(winnerID) {
+  //   // check if someone did a successful slap
+  //   const withCards = players.filter(p => p.deck.length)
+  //   console.log('end check, players with cards', withCards)
+  //   if (withCards.length > 1) return false
+
+  //   // check for extended play stack win
+  //   const me = players.find(p => p.uid == uid)
+  //   if (me.deck.length === 0) {
+  //     console.log('you won the battle but not the war...yet')
+  //     return false
+  //   }
+    
+  //   for (const i in players) {
+  //     if (players[i].uid == winnerID) {
+  //       console.log(players[i].name + ' has won!')
+  //       setErrMsg(players[i].name + ' has won!')
+  //       messageAll(players[i].name + ' has won!')
+  //     }
+  //     players[i].deck = []
+  //     players[i].turn = false
+  //   }
+  //   stack = []
+  //   setStatus('ready')
+  //   socket.emit('update', { players, stack, state: 'end' })
+  //   return true
+  // }
+
+  // function winStack(winnerUID, type) {
+
+  //   // TODO: do a better check on if a slap stole the pile
+  //   // this check will not work if the goes goes too fast
+  //   if (type == 'duel') {
+  //     if (stack.length < 2) {
+  //       console.log('duel stolen')
+  //       return
+  //     }
+  //   }
+
+  //   console.log('stack win check', players, 'but first check for end game win', winnerUID)
+
+  //   // check for game end
+  //   // console.log('checking end state after a stack was won', winnerUID)
+  //   if (endGame(winnerUID)) return
+
+  //   // remove whoever had turn before
+  //   let index = players.findIndex(p => p.turn == true)
+  //   if (index !== -1) {
+  //     players[index].turn = false
+  //   }
+
+  //   for (const i in players) {
+  //     if (players[i].uid == winnerUID) {
+  //       console.log('setting duel winner', players[i].name, 'adding', stack.length, 'cards')
+  //       players[i].turn = true // set it to my turn
+  //       players[i].deck.push(...stack) // mutable
+  //     }
+  //   }
+
+  //   stack = []
+  //   socket.emit('update', { players, stack: [], state: 'win' })
+  // }
 
   // TODO: this likely delays first paint
   if (!players.length) return <Load />
@@ -552,7 +766,7 @@ export default function index() {
             <directionalLight castShadow intensity={2} position={[30, 200, 49]}  />
             <Physics colliders={false} gravity={[0,-1,0]}>
                 <Ground />
-                <PlayersAndChairs slap={slap} gameLoop={gameLoop} players={playersState} />
+                <PlayersAndChairs slap={slap} gameLoop={loop} players={playersState} />
                 <Table />
                 <Room />
                 <Cards />

@@ -61,6 +61,9 @@ build {
       // AWS monitoring
       "sudo yum install amazon-cloudwatch-agent -y -q",
 
+      // curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
+      // sudo yum install nodejs -y
+
       // remove docker
       "sudo yum remove docker -y -q",
       "sudo groupdel docker",
@@ -68,7 +71,12 @@ build {
       "sudo yum makecache",
       "sudo grubby --update-kernel=ALL --remove-args=\"systemd.unified_cgroup_hierarchy=0\"",
 
-      // "sudo yum install git -y -q",
+      // install node
+      "sudo yum install git -y -q",
+      "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash",
+      ". ~/.nvm/nvm.sh",
+      "nvm install --lts",
+      "npm install pm2@latest -g"
       // "sudo yum install golang -y -q",
       // "git clone https://github.com/CodaBool/p12-slap.git slap",
       // "cd slap",
@@ -87,7 +95,7 @@ build {
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json",
 
       // create service
-      "sudo sh -c \"printf '[Unit]\nDescription=goserver\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
+      "sudo sh -c \"printf '[Unit]\nDescription=node-server\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=/opt/server\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
 
       // start service
       "sudo systemctl --now enable server",
@@ -100,3 +108,12 @@ build {
     ]
   }
 }
+
+
+
+/*
+
+ExecStart=npm run prod
+WorkingDirectory=/opt/server
+
+pm2 stop main

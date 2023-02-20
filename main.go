@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
-	"net/http"
 	"os"
+	"os/signal"
 	"reflect"
 	"strings"
+	"syscall"
 	"time"
 
 	ms "github.com/mitchellh/mapstructure"
@@ -99,7 +101,7 @@ func removeIndex(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
-func debugLogger() {
+func debugLogger(isProduction bool) {
 	var _ string = `                _        _     _
                | |      | |   (_)      
  ___  ___   ___| | _____| |_   _  ___  
@@ -114,6 +116,17 @@ func debugLogger() {
 	// 1 INF log.Info().Msg("")
 	// 0 DBG log.Print("")
 	// - TRC log.Trace().Msg("")
+
+	if isProduction {
+		// has no timestamp and outputs json
+		// by default all log levels are printed
+		// changing fieldname to message makes filtering easier in AWS
+		log.Logger = zerolog.New(os.Stderr).With().Logger()
+		// zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		// https://github.com/rs/zerolog#error-logging
+		zerolog.ErrorFieldName = "message"
+		return
+	}
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:          os.Stderr,
 		PartsExclude: []string{zerolog.TimestampFieldName}, // comment to add time
@@ -152,9 +165,9 @@ func printRooms(io *server.Server, printPlayers bool, players map[string]Player)
 				}
 			}
 		}
-		log.Info().Strs("All", output).Send()
+		log.Print(output)
 	} else {
-		log.Info().Strs("Rooms", s).Send()
+		log.Print(s)
 	}
 }
 
@@ -194,6 +207,21 @@ func playersInRoom(io *server.Server, room string, players map[string]Player) (p
 		}
 	}
 	return pSlice
+}
+
+func basicDebug(io *server.Server, p map[string]Player) {
+	var connected uint64 = 0
+	rooms := make([]string, 0)
+	if connected != io.Engine().ClientsCount() {
+		connected = io.Engine().ClientsCount()
+	}
+	clients := io.Sockets().Adapter().FetchSockets(&server.BroadcastOptions{})
+	for _, client := range clients {
+		if cl, ok := client.(*server.Socket); ok {
+			rooms = append(rooms, string(cl.Id()))
+		}
+	}
+	log.Print("basic debug: ", connected, " players ", len(p), " rooms: ", rooms)
 }
 
 // TODO: this probably could be improved with the new foudn FetchSockets logic used in inRoom
@@ -292,18 +320,30 @@ func rmNonAlphaNum(s string) string {
 const ROOM_CHAR_SIZE int = 6
 
 func main() {
+	prod := flag.Bool("prod", false, "production")
+	flag.Parse()
+
 	// allocate 100 initial players in memory
 	players := make(map[string]Player, 100)
 	// this would be a better as a set of a set
 	// roomRegistry := make(map[string][]string, 100)
 
+	// attachOptions := &config.AttachOptions{}
+	// attachOptions.SetAddTrailingSlash(false)
+
+	// httpServer := types.CreateServer(nil)
+	// config := server.DefaultServerOptions()
+	// TODO: specify the cors here
+	// config.SetCors(&types.Cors{Origin: "*"})
+	// config.SetAddTrailingSlash(false) // this is only available in 1.3 of engine.io
+	// io := server.NewServer(httpServer, config)
+
 	httpServer := types.CreateServer(nil)
 	config := server.DefaultServerOptions()
-	// TODO: specify the cors here
-	config.SetCors(&types.Cors{Origin: "*"})
 	io := server.NewServer(httpServer, config)
+	// httpServer.Handle("/socket.io", io.ServeHandler(nil))
 
-	debugLogger()
+	debugLogger(*prod)
 	// go debug(io, players)
 
 	// USEFUL
@@ -339,16 +379,15 @@ func main() {
 			socket.Join(server.Room(rkey))
 
 			io.Sockets().To(server.Room(rkey)).Emit("init", rkey)
-			log.Info().Str("Name", players[id].Name).Msg("👋") // .Str("Room", rkey)
-		})
-
-		socket.On("run", func(...any) {
+			// log.Info().Msg(fmt.Sprintf("👋 Name: %s", players[id].Name))
+			log.Print("👋 Name: ", player.Name)
 		})
 
 		socket.On("chat", func(msg ...any) {
 			var message Message
 			err := ms.Decode(msg[0], &message)
 			check(err)
+			basicDebug(io, players)
 			socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
 
@@ -362,27 +401,27 @@ func main() {
 				if posX, ok := arr[0].(float64); ok {
 					move.X = int16(posX)
 				} else {
-					log.Print("failed to cast position X to float64")
+					log.Warn().Msg("failed to cast position X to float64")
 				}
 				if posZ, ok := arr[1].(float64); ok {
 					move.Z = int16(posZ)
 				} else {
-					log.Print("failed to cast position Z to float64")
+					log.Warn().Msg("failed to cast position Z to float64")
 				}
 				if rotation, ok := arr[2].(float64); ok {
 					move.Rotation = int16(rotation)
 				} else {
-					log.Print("failed to cast rotation to float64")
+					log.Warn().Msg("failed to cast rotation to float64")
 				}
 				if uid, ok := arr[3].(string); ok {
 					move.Uid = uid
 				} else {
-					log.Print("failed to cast uid to string")
+					log.Warn().Msg("failed to cast uid to string")
 				}
 				if order, ok := arr[4].(float64); ok {
 					move.Order = int8(order)
 				} else {
-					log.Print("failed to cast order to int8")
+					log.Warn().Msg("failed to cast order to int8")
 				}
 				// log.Print("broadcast ", move)
 				socket.Broadcast().To(server.Room(rkey)).Emit("move", move)
@@ -396,7 +435,7 @@ func main() {
 				// 	log.Print("ok ", ok, " ", anInt)
 				// }
 			} else {
-				log.Print("outter fail")
+				log.Warn().Msg("outter fail")
 			}
 			// socket.Broadcast().To(server.Room(rkey)).Emit("chat", message)
 		})
@@ -435,7 +474,7 @@ func main() {
 			err := ms.Decode(data[0], &result)
 			check(err)
 			socket.Broadcast().To(server.Room(rkey)).Emit("drop",
-				map[string]string{"key": result.Key, "type": result.Type},
+				map[string]string{"key": result.Key, "type": result.Type, "id": result.Id},
 			)
 		})
 
@@ -473,11 +512,10 @@ func main() {
 					// if m["id"] is nil at this point the client has failed the init process
 					// TODO: they are connected on the socket but failed to join, so an error should
 					// be sent down to client here
-					log.Error().Msg("Failed init")
+					log.Warn().Msg("Failed init")
 					printRooms(io, true, players)
 					io.Sockets().To(server.Room(id)).Emit("err", "init")
-
-					log.Print("but do I know my name ", m["Name"], " | name: ", players[id].Name, " | rkey: ", m["rkey"])
+					log.Print("failed init data = Name 1: ", m["Name"], " | Name 2: ", players[id].Name, " | Room: ", m["rkey"])
 				}
 
 				if m["rkey"] != rkey && m["id"] != nil {
@@ -494,7 +532,8 @@ func main() {
 								count++
 							}
 						}
-						log.Info().Str("Joining", room).Str("Name", players[id].Name).Int8("Order", count+1).Msg("✈️ ")
+						log.Print("✈️  Name: ", players[id].Name, " | Room: ", room, " | Order: ", count+1)
+						// log.Info().Str("Joining", room).Str("Name", players[id].Name).Int8("Order", count+1).Msg("✈️ ")
 
 						// TODO: find a way to remove old room
 						// socket.Leave(server.Room(rkey))
@@ -521,15 +560,35 @@ func main() {
 		socket.On("disconnect", func(...any) {
 			// debug
 			if player, ok := players[id]; ok {
-				log.Info().Str("Room", rkey).Str("ID", string(socket.Id())).Str("Name", player.Name).Msg("🚪")
+				log.Print("🚪 Room: ", rkey, " | Name: ", player.Name)
+				// log.Info().Str("Room", rkey).Str("ID", string(socket.Id())).Str("Name", player.Name).Msg("🚪")
 			}
 			socket.Broadcast().To(server.Room(rkey)).Emit("leave", players[id])
 			delete(players, id)
 		})
 	})
-
-	mux := http.NewServeMux()
-	mux.Handle("/socket.io/", httpServer)
 	log.Info().Msg("🎧")
-	log.Print(http.ListenAndServe(":80", mux))
+	httpServer.Listen(":80", nil)
+	exit := make(chan struct{})
+	SignalC := make(chan os.Signal)
+
+	signal.Notify(SignalC, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		for s := range SignalC {
+			switch s {
+			case os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+				close(exit)
+				return
+			}
+		}
+	}()
+
+	<-exit
+	httpServer.Close(nil)
+	os.Exit(0)
+
+	// mux := http.NewServeMux()
+	// mux.Handle("/socket.io/", httpServer)
+
+	// log.Print(http.ListenAndServe(":80", mux))
 }

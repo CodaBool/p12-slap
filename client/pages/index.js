@@ -38,7 +38,7 @@ export default function index() {
     // TODO: find out if this is too expensive
     // router?.prefetch('/game')
     socket.on("init", id => {
-      if (!players.length) {
+      if (players.length === 0) {
         // name, uid, id, order
         const me = new Player(localStorage.getItem('name'), uid, id, 1)
         players.push(me)

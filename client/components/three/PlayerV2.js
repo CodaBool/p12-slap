@@ -203,22 +203,22 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
     socket.on('move', data => {
       // const [a, b, act] = getRefFromOrder(data[1])
-      if (data.order === 1) {
-        body1.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
+      if (data[4] === 1) {
+        body1.current.setTranslation({ x: data[0] / 100, y: .04, z: data[1] / 100 }, true)
         body1.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        scene1.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
-      } else if (data.order === 2) {
-        body2.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
+        scene1.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data[2]/100)
+      } else if (data[4] === 2) {
+        body2.current.setTranslation({ x: data[0] / 100, y: .04, z: data[1] / 100 }, true)
         body2.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        scene2.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
-      } else if (data.order === 3) {
-        body3.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
+        scene2.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data[2]/100)
+      } else if (data[4] === 3) {
+        body3.current.setTranslation({ x: data[0] / 100, y: .04, z: data[1] / 100 }, true)
         body3.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        scene3.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
-      } else if (data.order === 4) {
-        body4.current.setTranslation({ x: data.x / 100, y: .04, z: data.z / 100 }, true)
+        scene3.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data[2]/100)
+      } else if (data[4] === 4) {
+        body4.current.setTranslation({ x: data[0] / 100, y: .04, z: data[1] / 100 }, true)
         body4.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-        scene4.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data.rotation/100)
+        scene4.setRotationFromAxisAngle(new THREE.Vector3(0, 1, 0), data[2]/100)
       }
     })
     
@@ -272,7 +272,7 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         // using int8 in backend means this can be max -128 to 127
         // using int16 in backend means this can be max -32,768 to 32,767
         // int16 seems to make sense
-        socket.emit('move', [Math.floor(myBody.current.translation().x * 100), Math.floor(myBody.current.translation().z * 100), cameraRotation*100, uid, order])
+        socket.emit('move', [Math.floor(myBody.current.translation().x * 100), Math.floor(myBody.current.translation().z * 100), Math.floor(cameraRotation*100), uid, order])
       }
     }, 100)
     return () => clearInterval(interval)
