@@ -47,6 +47,14 @@ build {
     source = "agent.json"
     destination = "/tmp/agent.json"
   }
+  provisioner "file" {
+    source = "../server.js"
+    destination = "/home/ec2-user/server.js"
+  }
+  provisioner "file" {
+    source = "../package.json"
+    destination = "/home/ec2-user/package.json"
+  }
 
   // I used a gist guide on how to setup log agent as well as the AWS docs
   // gist = https://gist.github.com/adam-hanna/06afe09209589c80ba460662f7dce65c
@@ -61,9 +69,6 @@ build {
       // AWS monitoring
       "sudo yum install amazon-cloudwatch-agent -y -q",
 
-      // curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
-      // sudo yum install nodejs -y
-
       // remove docker
       "sudo yum remove docker -y -q",
       "sudo groupdel docker",
@@ -72,23 +77,21 @@ build {
       "sudo grubby --update-kernel=ALL --remove-args=\"systemd.unified_cgroup_hierarchy=0\"",
 
       // install node
-      "sudo yum install git -y -q",
       "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash",
       ". ~/.nvm/nvm.sh",
       "nvm install --lts",
-      "git clone https://github.com/CodaBool/p12-slap.git slap",
-      "cd slap && npm install --omit=dev",
 
-      // add node to sudo
-      // TODO: nginx or iptables are more secure
+      // TODO: using package-lock with npm ci is better
+      "npm install --omit=dev",
+
+      // TODO: nginx or iptables are more secure than adding node to sudo
       "sudo cp $(echo \"$NVM_DIR/versions/node/$(nvm version)/bin/node\") /bin",
-      // "NODE_BIN=$(echo \"$NVM_DIR/versions/node/$(nvm version)/bin/node\")",
-      // "sudo sh -c \"printf 'alias node=$NODE_BIN\n' >> /root/.bashrc\"",
+
 
       // install pm2
       // "npm install pm2@latest -g"
       // "sudo yum install golang -y -q",
-      // "cd slap",
+      // "sudo yum install git -y -q",
 
       // add Go binary
       // "sudo chmod 750 /tmp/server",
@@ -104,7 +107,7 @@ build {
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/agent.json",
 
       // create service
-      "sudo sh -c \"printf '[Unit]\nDescription=node-server\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=node server.js\nWorkingDirectory=/home/ec2-user/slap\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
+      "sudo sh -c \"printf '[Unit]\nDescription=node-server\nAfter=network.target\n\n[Service]\nUser=root\nGroup=root\nRestart=always\nRestartSec=10s\nExecStart=node server.js\nWorkingDirectory=/home/ec2-user\nStandardOutput=file:/var/log/server.log\nStandardError=file:/var/log/server.log\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/server.service\"",
 
       // start service
       "sudo systemctl --now enable server",
@@ -122,25 +125,12 @@ build {
 
 /*
 
-sudo sh -c \"printf 'alias node=\"/home/ec2-user/.nvm/versions/node/$VERSION/bin/node\"' >> /root/.bashrc\"
-
-
-ExecStart=npm run prod
-WorkingDirectory=/opt/server
-
 pm2 stop main
-
-53M
-9M
-
-npm install --omit=dev
-
 
 one guide suggested pm2 put logs at  /home/safeuser/.pm2/logs/app-err.log.
 
 # question
 - find out what `pm2 startup -u safeuser` does
-
 
 filter @logStream = 'log'
  | fields datefloor(@timestamp, 1s) as time
