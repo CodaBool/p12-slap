@@ -78,10 +78,12 @@ build {
       "nvm install --lts",
       "git clone https://github.com/CodaBool/p12-slap.git slap",
       "cd slap && npm install --omit=dev",
-      // "VERSION=$(ls -U /home/ec2-user/.nvm/versions/node/ | head -1)",
-      // "sudo sh -c \"printf 'alias node=\"/home/ec2-user/.nvm/versions/node/$VERSION/bin/node\"' >> /root/.bashrc\"",
-      "sudo ln -s '$NVM_DIR/versions/node/$(nvm version)/bin/node' '/usr/local/bin/node'",
-      "sudo ln -s '$NVM_DIR/versions/node/$(nvm version)/bin/npm' '/usr/local/bin/npm'",
+
+      // add node to sudo
+      // TODO: nginx or iptables are more secure
+      "sudo cp $(echo \"$NVM_DIR/versions/node/$(nvm version)/bin/node\") /bin",
+      // "NODE_BIN=$(echo \"$NVM_DIR/versions/node/$(nvm version)/bin/node\")",
+      // "sudo sh -c \"printf 'alias node=$NODE_BIN\n' >> /root/.bashrc\"",
 
       // install pm2
       // "npm install pm2@latest -g"
