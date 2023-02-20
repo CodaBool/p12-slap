@@ -22,7 +22,7 @@
         "collect_list": [{
           "file_path": "/var/log/server.log",
           "log_group_name": "/aws/ec2/slap",
-          "retention_in_days": 21,
+          "retention_in_days": 30,
           "timestamp_format": "%y:%m:%d:%H:%M:%S"
         }]
       }
