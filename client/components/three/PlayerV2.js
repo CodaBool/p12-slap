@@ -6,8 +6,8 @@ import {  useRapier, CapsuleCollider, CuboidCollider, RigidBody, quat, euler  } 
 import * as THREE from "three"
 // import * as RAPIER from "@dimforge/rapier3d-compat"
 import { socket } from '../../constants'
-import { useStore, uid } from '../../pages'
-import { players as pArr } from '../../pages/game'
+import { uid } from '../../pages'
+import { players } from '../../pages/game'
 import Chairs from './Chair'
 import { SkeletonUtils } from "three-stdlib"
 
@@ -18,14 +18,7 @@ const sideVector = new THREE.Vector3()
 
 useGLTF.preload("/player.glb")
 
-function OtherPlayer({ scene, position, color, id, animations, players, body }) {
-  // const body = useRef()
-  const direction = new THREE.Vector3()
-  const frontVector = new THREE.Vector3()
-  const sideVector = new THREE.Vector3()
-  const SPEED = 5
-  let pos = {x:position[0], y:position[1], z:position[2]}
-
+function OtherPlayer({ scene, position, color, body }) {
   useEffect(() => {
     scene.traverse(obj => {
       if (obj.isMesh) {
@@ -35,39 +28,6 @@ function OtherPlayer({ scene, position, color, id, animations, players, body }) 
       }
     })
   }, [])
-
-  let smallDif = .01 // .3+
-  let dif = .1 // .3+
-  // useFrame(() => {
-  //   const distance = Math.hypot(pos.x-body.current.translation().x, pos.z-body.current.translation().z)
-  //   const velocity = body.current.linvel()
-  //   // if (id==1) console.log(id, 'distance', distance)
-  //   if (distance < dif) {
-  //     if (distance > smallDif) {
-  //       // console.log(id, 'small teleporting', distance)
-  //       body.current.setTranslation(pos, true)
-  //       body.current.setLinvel({ x: 0, y: 0, z: 0 })
-  //     } 
-  //   } else if (distance > dif) {
-  //     // console.log(id, 'giving velocity', SPEED*distance)
-  //     if (pos.z-body.current.translation().z > 0) { // down
-  //       frontVector.set(0, 0, 1)
-  //     } else { // up
-  //       frontVector.set(0, 0, -1)
-  //     }
-  //     if (pos.x-body.current.translation().x > 0) { // right
-  //       sideVector.set(-1, 0, 0)
-  //     } else { // left
-  //       sideVector.set(1, 0, 0)
-  //     }
-  //     direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(SPEED)
-  //     body.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z })
-  //   } else if (distance > 10) { // should teleport
-  //     // console.log(id, 'big teleporting', distance)
-  //     body.current.setTranslation(pos, true)
-  //     body.current.setLinvel({ x: 0, y: 0, z: 0 })
-  //   }
-  // })
 
   return (
     <RigidBody
@@ -93,11 +53,9 @@ let cameraRotation = 0
 let locked = false
 let vector = new THREE.Vector3()
 
-export default function PlayerV2({ gameLoop, slap, players }) {
+export default function PlayerV2({ gameLoop, slap }) {
   const [, get] = useKeyboardControls()
-  // const [locked, setLocked] = useState(false)
   const [currentChair, setCurrentChair] = useState()
-  // const [animate, setAnimate] = useState('Idle')
   const [lastPos, setLastPos] = useState([8,0,0])
   const { animations, scene:object } = useGLTF("/player.glb")
   const myBody = useRef(null)
@@ -248,18 +206,30 @@ export default function PlayerV2({ gameLoop, slap, players }) {
 
   useEffect(() => {
     if (!players?.length || order) return
-    const me = players?.find(p => p.uid === uid)
-    // console.log('initializing myself as player number', me.order)
-    if (me.order === 1) {
-      myBody.current.setTranslation({ x: 4, y: .04, z: 5 }, true)
-    } else if (me.order === 2) {
-      myBody.current.setTranslation({ x: -6, y: .04, z: 5 }, true)
-    } else if (me.order === 3) {
-      myBody.current.setTranslation({ x: 8, y: .04, z: -5 }, true)
-    } else if (me.order === 4) {
-      myBody.current.setTranslation({ x: -10, y: .04, z: -5 }, true)
+    for (const p of players) {
+      if (p.uid === uid) {
+        order = p.order
+        if (order === 1) {
+          myBody.current.setTranslation({ x: 4, y: .04, z: 5 }, true)
+        } else if (order === 2) {
+          myBody.current.setTranslation({ x: -6, y: .04, z: 5 }, true)
+        } else if (order === 3) {
+          myBody.current.setTranslation({ x: 8, y: .04, z: -5 }, true)
+        } else if (order === 4) {
+          myBody.current.setTranslation({ x: -10, y: .04, z: -5 }, true)
+        }
+      } else {
+        if (p.order === 1) {
+          body1.current.setTranslation({ x: 4, y: .04, z: 5 }, true)
+        } else if (p.order === 2) {
+          body2.current.setTranslation({ x: -6, y: .04, z: 5 }, true)
+        } else if (p.order === 3) {
+          body3.current.setTranslation({ x: 8, y: .04, z: -5 }, true)
+        } else if (p.order === 4) {
+          body4.current.setTranslation({ x: -10, y: .04, z: -5 }, true)
+        }
+      }
     }
-    order = me.order
   }, [players])
 
   useEffect(() => {
@@ -425,14 +395,14 @@ export default function PlayerV2({ gameLoop, slap, players }) {
     if (e.buttons === 2) { // RMB
       if (!locked || !currentChair) return
       changeMyChair('stand', currentChair, Number(order))
-      // let size = 1
-      // stack.forEach(() => size++)
-      // camera.position.set(0, 3.7 + (size * .05), .7)
-      // camera.rotation.set(-Math.PI /2.5, 0, 0)
     } else if (e.buttons === 1) { // LMB
       if (locked) {
-        socket.emit('animation', ['Slap', order])
-        gameLoop()
+        if (players.find(p => p.turn)) {
+          socket.emit('animation', ['Slap', order])
+          gameLoop()
+        } else {
+          console.log('THIS STILL WORKS')
+        }
       }
     }
   }
@@ -497,10 +467,10 @@ export default function PlayerV2({ gameLoop, slap, players }) {
         {/* <primitive object={myScene} ref={primRef} /> */}
         <CuboidCollider args={[.32, .85, .32]} position={[0, .83, 0]} />
       </RigidBody>
-      <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} animations={animations} players={players} id={1} />
-      <OtherPlayer position={[26,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} animations={animations} players={players} id={2} />
-      <OtherPlayer position={[30,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} animations={animations} players={players} id={3} />
-      <OtherPlayer position={[34,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} animations={animations} players={players} id={4} />
+      <OtherPlayer position={[22,.04,20]} body={body1} color="rgb(138, 138, 254)" scene={scene1} />
+      <OtherPlayer position={[26,.04,20]} body={body2} color="rgb(201, 104, 104)" scene={scene2} />
+      <OtherPlayer position={[30,.04,20]} body={body3} color="rgb(99, 152, 213)" scene={scene3} />
+      <OtherPlayer position={[34,.04,20]} body={body4} color="rgb(254, 225, 137)" scene={scene4} />
       <Chairs h={handleChairClick} />
     </>
   )

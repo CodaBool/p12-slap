@@ -1,24 +1,14 @@
-import { setState, useEffect, useState } from 'react'
-import * as THREE from "three"
-import { useThree } from "@react-three/fiber"
+import { useEffect, useState } from 'react'
 
 export default function Button({ position, action, color, players }) {
   const [show, setShow] = useState()
-  // const onClick = useCallback((e) => {
-  //   action()
-  //   e.stopPropagation()
-  // }, [])
 
   useEffect(() => {
-    if (!players) return
-    let foundATurn = false
-    for (const p of players) {
-      if (p.turn) {
-        foundATurn = true
-        setShow(false)
-      }
+    if (players?.find(p => p.turn)) {
+      setShow(false)
+    } else {
+      setShow(true)
     }
-    if (!foundATurn) setShow(true)
   }, [players])
 
   if (!show) return

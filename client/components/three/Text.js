@@ -5,7 +5,6 @@ import { extend, useFrame } from "@react-three/fiber"
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader'
 import { useStore } from '../../pages/game'
 import { uid } from '../../pages'
-import { debounce } from '../../constants'
 
 const font = new FontLoader().parse(roboto)
 extend({ TextGeometry })
@@ -49,84 +48,6 @@ export default function Text({ text, position, rotation, scale, setText, players
       <textGeometry args={[text, { font, size: .1, height: .02 }]} />
       <meshStandardMaterial attach='material' color='white' transparent opacity={opacity} />
     </mesh>
-  )
-}
-
-export function TurnText({ players }) {
-  const [text, setText] = useState()
-  const [color, setColor] = useState()
-  // const status = useStore(state => state.status)
-
-  useEffect(() => {
-    // if (status == 'ready') {
-    //   setText(null)
-    //   return
-    // }
-    if (!players) return
-    let foundATurn = false
-    for (const p of players) {
-      if (p.turn) foundATurn = true
-      if (p.turn && p.name !== text) {
-        if (p.uid === uid) {
-          setText('Your Turn')
-          setColor('green')
-        } else {
-          setText(p.name)
-          setColor('red')
-        }
-      }
-    }
-    if (!foundATurn) setText(null)
-  }, [players])
-
-  if (!text) return
-
-  return (
-    <mesh position={[-.8, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.3}>
-      <textGeometry args={[text, { font, size: .1, height: .02,  }]} />
-      <meshStandardMaterial attach='material' color={color} />
-    </mesh>
-  )
-}
-
-export function PlayerText({ players }) {
-  const [otherNames, setOtherNames] = useState()
-  const [myName, setMyName] = useState()
-
-  useEffect(() => {
-    if (!players) return
-    let foundATurn = false
-    for (const p of players) {
-      if (p.turn) foundATurn = true
-    }
-    if (!foundATurn) {
-      setMyName(null)
-      return
-    }
-    let txt = ""
-    for (const p of players) {
-      if (p.uid === uid) {
-        setMyName(p.name + ': ' + p.deck.length)
-      } else {
-        txt += p.name + ': ' + p.deck.length + '\n'
-      }
-    }
-    setOtherNames(txt)
-  }, [players])
-
-  if (!otherNames || !myName) return
-
-  return (
-    <>
-      <mesh position={[.8, 2, -.9]} rotation={[-Math.PI /2,0,0]} scale={.3}>
-        <textGeometry args={[myName, { font, size: .1, height: .02,  }]} />
-        <meshStandardMaterial attach='material' color='green' />
-      </mesh>
-      <mesh position={[.8, 2, -.85]} rotation={[-Math.PI /2,0,0]} scale={.3}>
-        <textGeometry args={[otherNames, { font, size: .1, height: .02,  }]} />
-        <meshStandardMaterial attach='material' color='white' />
-      </mesh>
-    </>
   )
 }
 

@@ -11,7 +11,7 @@ import { useStore } from '../pages/game'
 import { uid } from '../pages'
 import { socket } from '../constants'
 
-export default function UI({ players }) {
+export default function UI({ players, reset }) {
   const [expanded, setExpanded] = useState(false)
   const [msg, setMsg] = useState('')
   const ref = useRef()
@@ -107,13 +107,16 @@ export default function UI({ players }) {
   // if (players?.length < 2) return
 
   function resetGame() {
-    const wipedPlayer = players.map(p => {
+    for (const p of players) {
+      if (p.uid === uid) {
+        console.log('sending msg =', `${p.name} has reset the game`)
+        socket.emit('chat', {body: `${p.name} has reset the game`})
+      }
       p.turn = false
       p.deck = []
-      return p
-    })
+    }
     socket.emit('update', {
-      players: wipedPlayer,
+      players,
       faceOwner: '',
       stack: [],
       state: 'win'

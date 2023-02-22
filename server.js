@@ -6,7 +6,6 @@ const io = require('socket.io')(http, {
   cors: { origin: '*' }
 })
 const cors = require('cors')
-// const path = require('path')
 
 // middleware
 app.use(cors())
@@ -25,10 +24,6 @@ class Player {
   turn = false
   deck = []
 }
-
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, './index.html'))
-// })
 
 io.on('connection', socket => {
   const id = socket.id
@@ -90,10 +85,14 @@ io.on('connection', socket => {
     }
   })
   socket.on("disconnect", () => {
-    const player = players.get(id)
-    console.log('🚪 Name:', player?.name, "| Room:", room)
-    players.delete(id)
-    socket.broadcast.to(room).emit('leave', player)
+    if (players.size) {
+      const player = players.get(id)
+      console.log('🚪 Name:', player?.name, "| Room:", room, "| Players:", players.size)
+      players.delete(id)
+      socket.broadcast.to(room).emit('leave', player)
+    } else {
+      console.log('🚪 Emptied:', room)
+    }
   })
 })
 

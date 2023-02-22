@@ -283,7 +283,7 @@ DASHBOARD_SOURCECODE=$( jq -n \
           "width": 18,
           "height": 11,
           "properties": {
-              "query": "SOURCE \"/aws/ec2/slap\" | fields @timestamp, @message\n| sort @timestamp desc\n| limit 500",
+              "query": "SOURCE \"/aws/ec2/slap\" | fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
               "region": "us-east-1",
               "stacked": false,
               "view": "table",

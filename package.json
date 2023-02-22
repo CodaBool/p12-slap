@@ -5,10 +5,9 @@
   "main": "index.js",
   "scripts": {
     "client": "cd client && npm start",
-    "start": "nodemon --exec node server.js",
-    "prod": "pm2 start server.js",
-    "n": "concurrently \"cd client && npm start\" \"nodemon --exec node server.js\"",
-    "race": "concurrently \"cd client && npm start\" \"SET \"CGO_ENABLED=1\" && nodemon --exec go run -race .\""
+    "server": "nodemon --exec node server.js",
+    "pm2": "pm2 start server.js",
+    "start": "concurrently \"cd client && npm start\" \"nodemon --exec node server.js\""
   },
   "repository": {
     "type": "git",

@@ -147,5 +147,3 @@ export default function CardsV2() {
   if (!cards?.length) return
   return cards
 }
-
-
