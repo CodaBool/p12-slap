@@ -286,7 +286,8 @@ DASHBOARD_SOURCECODE=$( jq -n \
               "query": "SOURCE \"/aws/ec2/slap\" | fields @timestamp, @message\n| sort @timestamp desc\n| limit 500",
               "region": "us-east-1",
               "stacked": false,
-              "view": "table"
+              "view": "table",
+              "title": "Logs"
           }
       }
   ]

@@ -39,10 +39,6 @@ build {
   sources = [
     "source.amazon-ebs.al2"
   ]
-  // provisioner "file" {
-  //   source = "server"
-  //   destination = "/tmp/server"
-  // }
   provisioner "file" {
     source = "agent.json"
     destination = "/tmp/agent.json"
@@ -81,12 +77,11 @@ build {
       ". ~/.nvm/nvm.sh",
       "nvm install --lts",
 
-      // TODO: using package-lock with npm ci is better
+      // TODO: using package-lock with npm ci is better, but slows down my install
       "npm install --omit=dev",
 
       // TODO: nginx or iptables are more secure than adding node to sudo
       "sudo cp $(echo \"$NVM_DIR/versions/node/$(nvm version)/bin/node\") /bin",
-
 
       // install pm2
       // "npm install pm2@latest -g"
@@ -122,9 +117,7 @@ build {
 }
 
 
-
 /*
-
 pm2 stop main
 
 one guide suggested pm2 put logs at  /home/safeuser/.pm2/logs/app-err.log.
@@ -142,7 +135,6 @@ filter @logStream = 'log'
  | parse  @message '"message":"*"' as message
 
 
-
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 
@@ -154,24 +146,19 @@ sudo iptables -t nat -v -L PREROUTING -n --line-number
 
 stackoverflow with tomcat 
 
-
-
 sudo iptables -A INPUT -i eth0 -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -i eth0 -p tcp --dport 8080 -j ACCEPT
 sudo iptables -A FORWARD -p tcp --dport 80 -j ACCEPT
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 
-
 medium article
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 9000
-
 
 enable routing
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 save iptables
 iptables-save > /etc/sysconfig/iptables #IPv4
-
 
 sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
