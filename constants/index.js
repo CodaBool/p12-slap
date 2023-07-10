@@ -2,7 +2,7 @@ import io from 'socket.io-client'
 import { useState, useEffect } from 'react'
 // forces the transport start as websocket. This skips an initial HTTP request & upgrade
 export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_DOMAIN || 'http://localhost:3001'
-export const socket = io.connect(SOCKET_URL, {path: '/slap/'})
+export const socket = io.connect(SOCKET_URL, {path: '/slap'})
 export const randomName = (Math.random() + 1).toString(36).substring(7)
 export const ROOM_CHAR_SIZE = 6
 
