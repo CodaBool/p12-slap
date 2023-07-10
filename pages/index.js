@@ -84,7 +84,7 @@ export default function index() {
   useEffect(() => {
     // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
     //   router.push('/offline')
-    // }
+    // }//
     socket.on("connect_error", (err) => {
       console.log(`connect_error due to ${err.message}`);
     })
