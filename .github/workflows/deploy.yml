@@ -12,4 +12,7 @@ jobs:
           remote_repository: https://github.com/codabool/sock
           target_branch: main
           access_token: ${{ secrets.ACCESS_TOKEN }}
+          commit_message: auto push \#${RUN_NUMBER}
+        env:
+          RUN_NUMBER: ${{ toJSON(github.run_number) }}
           
