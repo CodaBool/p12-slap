@@ -71,3 +71,13 @@
   border: 1px solid rgb(255, 255, 255);
   color: #000000;
 }
+@media (max-width: 767px) {
+  .svg:nth-child(7) {
+    z-index: -2;
+  }
+}
+@media (min-width: 768px) {
+  .svg:nth-child(7) {
+    z-index: 0;
+  }
+}
