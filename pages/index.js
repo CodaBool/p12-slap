@@ -102,7 +102,7 @@ export default function index() {
     // }//
     if (inp) {
       console.log('attempt with', inp)
-      setSock(io.connect(inp, {transports: ['websocket']}))
+      setSock(io.connect(inp, {transports: ['websocket'], rejectUnauthorized: false, secure: false}))
     }
     
   }, [inp])
