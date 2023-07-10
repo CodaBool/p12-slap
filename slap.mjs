@@ -20,6 +20,7 @@ class Player {
 io.on('connection', socket => {
   const id = socket.id
   let room = id.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, ROOM_CHAR_SIZE)
+  console.log('latest')
 
   socket.on("init", data => {
     const player = new Player(data['name'], data['uid'], 1, room)
