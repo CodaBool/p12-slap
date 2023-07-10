@@ -86,7 +86,7 @@ export default function index() {
     //   router.push('/offline')
     // }//
     socket.on("connect_error", (err) => {
-      console.log(`connect_error due to ${err.message}`);
+      console.log('connect_error due to', err);
     })
     console.log('domain', process.env.NEXT_PUBLIC_SOCKET_DOMAIN)
   }, [])
