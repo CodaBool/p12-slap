@@ -14,9 +14,6 @@ import useScreen from '../constants/useScreen'
 import { players } from './game'
 
 export const uid = Math.random().toString(16).slice(2)
-// const intlDateObj = new Intl.DateTimeFormat('en-US', {hour: '2-digit', hour12: false, timeZone: "America/New_York"})
-// gives hour from 0-23 , type string
-// const hourInEST = Number(intlDateObj.format(new Date()))
 
 export default function index() {
   const [name, setName] = useState()
