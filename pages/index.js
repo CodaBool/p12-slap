@@ -85,6 +85,7 @@ export default function index() {
     // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
     //   router.push('/offline')
     // }
+    // dummy deploy
     socket.on("connect_error", (err) => {
       console.log(`connect_error due to ${err.message}`);
     })
