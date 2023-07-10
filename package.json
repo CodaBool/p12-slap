@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "scripts": {
+    "client": "next dev",
+    "build": "next build",
+    "server": "nodemon --exec node slap.mjs",
+    "start": "concurrently \"next dev\" \"nodemon --exec node slap.mjs\""
+  },
+  "homepage": "https://github.com/CodaBool/p12-slap",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.1",
+    "@react-three/drei": "^9.78.1",
+    "@react-three/fiber": "^8.13.4",
+    "@react-three/rapier": "^1.1.1",
+    "bootstrap": "^5.3.0",
+    "next": "13.4.9",
+    "react": "18.2.0",
+    "react-bootstrap": "^2.8.0",
+    "react-bootstrap-icons": "^1.10.3",
+    "react-dom": "18.2.0",
+    "socket.io-client": "^4.7.1",
+    "three": "^0.154.0",
+    "three-stdlib": "^2.23.13",
+    "zustand": "^4.3.9"
+  }
+}
