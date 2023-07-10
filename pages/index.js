@@ -14,9 +14,9 @@ import useScreen from '../constants/useScreen'
 import { players } from './game'
 
 export const uid = Math.random().toString(16).slice(2)
-const intlDateObj = new Intl.DateTimeFormat('en-US', {hour: '2-digit', hour12: false, timeZone: "America/New_York"})
+// const intlDateObj = new Intl.DateTimeFormat('en-US', {hour: '2-digit', hour12: false, timeZone: "America/New_York"})
 // gives hour from 0-23 , type string
-const hourInEST = Number(intlDateObj.format(new Date()))
+// const hourInEST = Number(intlDateObj.format(new Date()))
 
 export default function index() {
   const [name, setName] = useState()
@@ -92,6 +92,7 @@ export default function index() {
   }, [])
   function initialize() {
     setShowBtn(false)
+    console.log('socket', socket)
     socket.emit('init', {name: localStorage.getItem('name'), uid})
   }
 
