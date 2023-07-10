@@ -85,9 +85,10 @@ export default function index() {
   }, [rkey])
 
   useEffect(() => {
-    if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
-      router.push('/offline')
-    }
+    // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
+    //   router.push('/offline')
+    // }
+    console.log('domain', process.env.NEXT_PUBLIC_SOCKET_DOMAIN)
   }, [])
   function initialize() {
     setShowBtn(false)
