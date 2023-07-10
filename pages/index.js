@@ -12,7 +12,6 @@ import Background from '../components/Background'
 import { socket, ROOM_CHAR_SIZE, Player } from '../constants'
 import useScreen from '../constants/useScreen'
 import { players } from './game'
-import { io } from 'socket.io-client'
 
 export const uid = Math.random().toString(16).slice(2)
 
@@ -24,8 +23,6 @@ export default function index() {
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showBtn, setShowBtn] = useState(true)
-  const [sock, setSock] = useState()
-  const [inp, setInp] = useState('')
   const router = useRouter()
   let screen = useScreen()
   
@@ -40,97 +37,52 @@ export default function index() {
     }
     // TODO: find out if this is too expensive
     // router?.prefetch('/game')
-    // socket.on("init", id => {
-    //   if (players.length === 0) {
-    //     // name, uid, id, order
-    //     const me = new Player(localStorage.getItem('name'), uid, id, 1)
-    //     players.push(me)
-    //     setLoading(true)
-    //     // TODO: this should be done based on btn event click
-    //     if (rkey?.length === ROOM_CHAR_SIZE) {
-    //       socket.emit('join', { rkey, id: me.id })
-    //     } else {
-    //       router.push({
-    //         pathname: '/game',
-    //         query: { id }
-    //       })
-    //     }
-    //   }
-    // })
+    socket.on("init", id => {
+      if (players.length === 0) {
+        // name, uid, id, order
+        const me = new Player(localStorage.getItem('name'), uid, id, 1)
+        players.push(me)
+        setLoading(true)
+        // TODO: this should be done based on btn event click
+        if (rkey?.length === ROOM_CHAR_SIZE) {
+          socket.emit('join', { rkey, id: me.id })
+        } else {
+          router.push({
+            pathname: '/game',
+            query: { id }
+          })
+        }
+      }
+    })
 
-    // socket.on("join", ioPlayers => {
-    //   for (const player of ioPlayers) {
-    //     if (player.uid !== uid) {
-    //       if (!player.deck) player.deck = []
-    //       players.push(player)
-    //     } else {
-    //       const me = players.find(p => p.uid == uid)
-    //       const index = players.indexOf(me)
-    //       if (index > -1) {
-    //         player.deck = []
-    //         players.splice(index, 1)
-    //         players.push(player)
-    //       }
-    //     }
-    //   }
-    //   router.push({
-    //     pathname: '/game',
-    //     query: { id: rkey }
-    //   })
-    // })
-    // return () => {
-    //   socket.off("init")
-    //   socket.off("join")
-    // }
+    socket.on("join", ioPlayers => {
+      for (const player of ioPlayers) {
+        if (player.uid !== uid) {
+          if (!player.deck) player.deck = []
+          players.push(player)
+        } else {
+          const me = players.find(p => p.uid == uid)
+          const index = players.indexOf(me)
+          if (index > -1) {
+            player.deck = []
+            players.splice(index, 1)
+            players.push(player)
+          }
+        }
+      }
+      router.push({
+        pathname: '/game',
+        query: { id: rkey }
+      })
+    })
+    return () => {
+      socket.off("init")
+      socket.off("join")
+    }
   }, [rkey])
 
-  useEffect(() => {
-    // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
-    //   router.push('/offline')
-    // }//
-    // socket.on("connect_error", (err) => {
-    //   console.log('connect_error due to', err);
-    // })
-    console.log('domain', process.env.NEXT_PUBLIC_SOCKET_DOMAIN)
-    // return () => {
-    //   socket.off("connect_error")
-    // }
-  }, [])
-  useEffect(() => {
-    // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
-    //   router.push('/offline')
-    // }//
-    if (inp) {
-      console.log('attempt with', inp)
-      setSock(io.connect(inp, { rejectUnauthorized: false}))
-    }
-    
-  }, [inp])
-  useEffect(() => {
-    // if (hourInEST > 0 && hourInEST < process.env.NEXT_PUBLIC_HOUR) {
-    //   router.push('/offline')
-    // }//
-    if (sock) {
-      console.log('sock connected =', sock.connected)
-      sock.on("connect_error", (err) => {
-        console.log('connect_error due to', err);
-      })
-      sock.on("conn", () => {
-        console.log('connection');
-      })
-      sock.emit('init', {name: localStorage.getItem('name'), uid})
-    }
-    return () => {
-      if (sock) {
-        sock.off("init")
-        sock.off("conn")
-        sock.off("connect_error")
-      }
-    }
-  }, [sock])
   function initialize() {
     setShowBtn(false)
-    console.log('socket', socket)
     socket.emit('init', {name: localStorage.getItem('name'), uid})
   }
 
@@ -168,7 +120,6 @@ export default function index() {
   return (
     <>
       <Background />
-      <input onChange={e => setInp(e.target.value)} />
       <div className="menuPage">
         <Row className="pt-5 m-0">
           <Col>

@@ -1,8 +1,13 @@
+import { createServer } from "http"
 import { Server } from "socket.io"
-const io = new Server(3001, {
-  cors: { origin: "*" }
+
+const httpServer = createServer()
+const io = new Server(httpServer, {
+  cors: { origin: "*" },
+  path: "/slap"
 })
 
+const PORT = 3001
 const ROOM_CHAR_SIZE = 6
 const players = new Map()
 
@@ -20,7 +25,6 @@ class Player {
 io.on('connection', socket => {
   const id = socket.id
   let room = id.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, ROOM_CHAR_SIZE)
-  console.log('latest')
 
   socket.on("init", data => {
     const player = new Player(data['name'], data['uid'], 1, room)
@@ -88,3 +92,5 @@ io.on('connection', socket => {
     }
   })
 })
+
+httpServer.listen(PORT)
